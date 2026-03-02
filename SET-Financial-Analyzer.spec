@@ -100,7 +100,7 @@ if sys.platform == "darwin":
     app = BUNDLE(
         coll,
         name="SET-Financial-Analyzer.app",
-        icon=None,       # Add your .icns file path here if you have one
+        icon="assets/icon.icns",
         bundle_identifier="com.set-financial.analyzer",
         info_plist={
             "CFBundleDisplayName": "SET Financial Analyzer",
@@ -123,5 +123,5 @@ else:
         strip=False,
         upx=True,
         console=False,   # No console window on Windows
-        icon=None,       # Add your .ico file path here if you have one
+        icon="assets/icon.ico",
     )
