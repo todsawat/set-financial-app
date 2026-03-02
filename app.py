@@ -974,10 +974,12 @@ def main():
         if val is None:
             return f'<span style="color:#888;font-size:0.7rem;">{label}: N/A</span>'
         color = "#09ab3b" if val > 0 else "#ff2b2b" if val < 0 else "#888"
+        bg = "rgba(9,171,59,0.1)" if val > 0 else "rgba(255,43,43,0.1)" if val < 0 else "transparent"
         if inverse:
             color = "#ff2b2b" if val > 0 else "#09ab3b" if val < 0 else "#888"
+            bg = "rgba(255,43,43,0.1)" if val > 0 else "rgba(9,171,59,0.1)" if val < 0 else "transparent"
         arrow = "▲" if val > 0 else "▼" if val < 0 else ""
-        return f'<span style="color:{color};font-size:0.7rem;">{arrow} {val:+.1f}% {label}</span>'
+        return f'<span style="color:{color};background:{bg};font-size:0.7rem;padding:1px 4px;border-radius:4px;">{arrow} {val:+.1f}% {label}</span>'
 
     def _metric_html(label, value, d1, d2, inverse=False):
         return f'''<div style="padding:2px 0;">
