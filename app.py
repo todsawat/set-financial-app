@@ -782,11 +782,28 @@ def main():
             "%23%23+%E0%B8%9C%E0%B8%A5%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%84%E0%B8%B2%E0%B8%94%E0%B8%AB%E0%B8%A7%E0%B8%B1%E0%B8%87%0A%0A"
             "%23%23+%E0%B8%AD%E0%B8%B8%E0%B8%9B%E0%B8%81%E0%B8%A3%E0%B8%93%E0%B9%8C%20%2F%20Browser%0A%0A"
         )
-        _fb_cols = st.columns(2)
-        with _fb_cols[0]:
-            st.link_button("เสนอ Feature ใหม่", _feat_url, use_container_width=True)
-        with _fb_cols[1]:
-            st.link_button("แจ้ง Bug", _bug_url, use_container_width=True, type="secondary")
+        st.markdown(
+            f"""
+            <div style="display:flex; gap:0.5rem;">
+                <a href="{_feat_url}" target="_blank" style="
+                    flex:1; text-align:center; padding:0.35rem 0.5rem;
+                    font-size:0.78rem; font-weight:500;
+                    background:#ff4b4b; color:#fff; border-radius:0.4rem;
+                    text-decoration:none; white-space:nowrap;">
+                    เสนอ Feature
+                </a>
+                <a href="{_bug_url}" target="_blank" style="
+                    flex:1; text-align:center; padding:0.35rem 0.5rem;
+                    font-size:0.78rem; font-weight:500;
+                    background:transparent; color:inherit;
+                    border:1px solid #888; border-radius:0.4rem;
+                    text-decoration:none; white-space:nowrap;">
+                    แจ้ง Bug
+                </a>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
         st.markdown("---")
         st.markdown(
