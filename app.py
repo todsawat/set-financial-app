@@ -92,11 +92,31 @@ st.markdown("""
         /* Force mobile metrics columns to stay side-by-side */
         .st-key-mobile_metrics div[data-testid="stHorizontalBlock"] {
             flex-wrap: nowrap !important;
+            gap: 0.3rem !important;
         }
         .st-key-mobile_metrics div[data-testid="column"] {
             flex: 1 1 0 !important;
             min-width: 0 !important;
             width: auto !important;
+            padding: 0 0.1rem !important;
+        }
+        /* ลด negative margin ใน mobile ไม่ให้ซ้อนกัน */
+        .st-key-mobile_metrics div[data-testid="stMetric"] {
+            margin-bottom: 0 !important;
+        }
+        /* เพิ่มช่องว่างระหว่าง 2 แถว */
+        .st-key-mobile_metrics div[data-testid="stHorizontalBlock"] {
+            margin-bottom: 0.5rem !important;
+        }
+        /* ลดขนาด font ให้พอดีกับ 3 คอลัมน์ */
+        .st-key-mobile_metrics div[data-testid="stMetricValue"] {
+            font-size: 1rem !important;
+        }
+        .st-key-mobile_metrics div[data-testid="stMetricLabel"] {
+            font-size: 0.7rem !important;
+        }
+        .st-key-mobile_metrics div[data-testid="stMetricDelta"] {
+            font-size: 0.65rem !important;
         }
     }
 </style>
