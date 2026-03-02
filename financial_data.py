@@ -1031,9 +1031,9 @@ def _build_quarterly(raw: dict, company: dict) -> dict:
     # ----------------------------------------------------------------
     # Step 5: Sort newest first, filter to Q1-Q4 only, keep 20 quarters.
     # Use the latest FY year (from annual_xlsx_map) as the anchor for the
-    # 5-year window, so that an in-progress "partial" year (e.g. Q1/2026
-    # filed before FY2025 closes) doesn't push the oldest year out of the
-    # window.
+    # 5-year window.  Allow up to latest_fy + 2 so that quarterly filings
+    # of the next year are still shown even when the annual report has not
+    # been filed yet (e.g. Q1/2025 appears before FY2024 is scraped).
     # ----------------------------------------------------------------
     rows.sort(key=lambda r: (r.get("year", 0), _quarter_sort_key(r.get("quarter", ""))), reverse=True)
     rows = [r for r in rows if r.get("quarter") in ("Q1", "Q2", "Q3", "Q4")]
@@ -1042,7 +1042,7 @@ def _build_quarterly(raw: dict, company: dict) -> dict:
         oldest_allowed = latest_fy - 4  # 5 FY years: latest_fy down to latest_fy-4
         rows = [
             r for r in rows
-            if oldest_allowed <= r.get("year", 0) <= latest_fy + 1
+            if oldest_allowed <= r.get("year", 0) <= latest_fy + 2
         ]
     rows = rows[:21]   # hard cap (21 allows one partial/extra quarter for off-FY companies)
 
