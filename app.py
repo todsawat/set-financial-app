@@ -99,13 +99,28 @@ st.markdown("""
         }
     }
 
-    /* Excel export button — small */
+    /* Excel export button — icon only, right-aligned */
     [data-testid="stDownloadButton"] button {
-        font-size: 0.72rem !important;
-        padding: 0.15rem 0.5rem !important;
+        padding: 0.2rem 0.4rem !important;
         min-height: 0 !important;
         height: auto !important;
-        line-height: 1.4 !important;
+        line-height: 1 !important;
+        font-size: 0 !important;          /* hide label text */
+        background: transparent !important;
+        border: 1px solid #1D6F42 !important;
+        border-radius: 4px !important;
+        color: transparent !important;
+    }
+    [data-testid="stDownloadButton"] button::before {
+        content: "";
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect x='4' y='4' width='40' height='40' rx='4' fill='%231D6F42'/%3E%3Cpath d='M14 13h20v4H14zm0 7h20v4H14zm0 7h20v4H14z' fill='%23fff' opacity='.3'/%3E%3Cpath d='M28 13h8v22h-8z' fill='%23fff' opacity='.15'/%3E%3Ctext x='7' y='34' font-family='Arial' font-weight='bold' font-size='18' fill='%23fff'%3EX%3C/text%3E%3C/svg%3E");
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        vertical-align: middle;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -163,7 +178,7 @@ def _xlsx_download(df: pd.DataFrame, filename: str, key: str):
     _, btn_col = st.columns([8, 1])
     with btn_col:
         st.download_button(
-            label="📥 xlsx",
+            label=" ",
             data=buf.getvalue(),
             file_name=filename,
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
