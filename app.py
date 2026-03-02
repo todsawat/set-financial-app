@@ -169,14 +169,16 @@ def _xlsx_download(df: pd.DataFrame, filename: str, key: str):
     buf = io.BytesIO()
     df.to_excel(buf, index=True, engine="openpyxl")
     with st.container(key=f"xlsx_wrap_{key}"):
-        st.download_button(
-            label="📥",
-            data=buf.getvalue(),
-            file_name=filename,
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            key=key,
-            use_container_width=False,
-        )
+        _spacer, _btn_col = st.columns([30, 1])
+        with _btn_col:
+            st.download_button(
+                label="📥",
+                data=buf.getvalue(),
+                file_name=filename,
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                key=key,
+                use_container_width=True,
+            )
 
 
 # ============================================================
