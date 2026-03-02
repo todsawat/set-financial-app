@@ -713,7 +713,7 @@ def main():
 
         st.markdown("---")
         st.markdown(
-            """
+            f"""
             <div style='font-size:0.75rem; color:#888;'>
             <b>แหล่งข้อมูล:</b> SET.or.th<br>
             <b>วิธีการ:</b> ดาวน์โหลด ZIP จาก News Section<br>
@@ -1308,7 +1308,7 @@ def main():
     # ---- Footer ----
     st.markdown("---")
     st.markdown(
-        """<div style='text-align:center; color:#888; font-size:0.8rem; padding:1rem;'>
+        f"""<div style='text-align:center; color:#888; font-size:0.8rem; padding:1rem;'>
         <b>SET Financial Analyzer</b> &nbsp;|&nbsp;
         ข้อมูลจาก <a href="https://www.set.or.th" target="_blank">SET.or.th</a> &nbsp;|&nbsp;
         ดาวน์โหลดงบการเงินจาก News Section ZIP &nbsp;|&nbsp;
