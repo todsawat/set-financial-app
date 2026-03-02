@@ -13,6 +13,7 @@ Features:
 """
 
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -783,6 +784,32 @@ def main():
     if not symbol:
         st.info("กรุณาพิมพ์ Symbol หุ้นที่ต้องการวิเคราะห์ในแถบด้านซ้าย")
         return
+
+    # ---- Auto-scroll to top & collapse sidebar on mobile when symbol changes ----
+    _prev = st.session_state.get("_prev_symbol", "")
+    if symbol != _prev:
+        st.session_state["_prev_symbol"] = symbol
+        if _prev:  # skip first load
+            components.html("""
+            <script>
+            (function() {
+                const isMobile = window.parent.innerWidth <= 768;
+                // Scroll main content to top
+                const main = window.parent.document.querySelector('section.main');
+                if (main) main.scrollTo({top: 0, behavior: 'smooth'});
+                // On mobile: collapse sidebar so user sees progress bar
+                if (isMobile) {
+                    const closeBtn = window.parent.document.querySelector(
+                        '[data-testid="stSidebar"] button[aria-label="Close"]'
+                    );
+                    if (closeBtn) closeBtn.click();
+                    // Fallback: force sidebar collapsed via attribute
+                    const sidebar = window.parent.document.querySelector('[data-testid="stSidebar"]');
+                    if (sidebar) sidebar.setAttribute('aria-expanded', 'false');
+                }
+            })();
+            </script>
+            """, height=0)
 
     # Fetch data with progress bar
     view_label = "รายไตรมาส" if view_mode == "quarterly" else "รายปี"
