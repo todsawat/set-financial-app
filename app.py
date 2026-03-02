@@ -924,7 +924,7 @@ def main():
     m3.metric("Core Profit", fmt(cp_curr), _fmt_delta(cp_qoq, "QoQ"))
     m3.metric("", "", _fmt_delta(cp_yoy, "YoY"), label_visibility="collapsed")
 
-    # Row 2: ROE, D/E (2 columns)
+    # Row 2: ROE, ROA, D/E (3 columns)
     roe = latest_r.get('roe_pct', 0)
     roa = latest_r.get('roa_pct', 0)
     prev_r = ratios[yoy_step] if len(ratios) > yoy_step else None
@@ -932,15 +932,20 @@ def main():
     roe_qoq = _pct(roe, prev_rq.get('roe_pct') if prev_rq else None)
     roe_yoy = _pct(roe, prev_r.get('roe_pct') if prev_r else None)
 
+    roa_qoq = _pct(roa, prev_rq.get('roa_pct') if prev_rq else None)
+    roa_yoy = _pct(roa, prev_r.get('roa_pct') if prev_r else None)
+
     de = latest_r.get('de_ratio', 0)
     de_qoq = _pct(de, prev_rq.get('de_ratio') if prev_rq else None)
     de_yoy = _pct(de, prev_r.get('de_ratio') if prev_r else None)
 
-    m4, m5 = st.columns(2)
+    m4, m5, m6 = st.columns(3)
     m4.metric("ROE", f"{roe:.1f}%", _fmt_delta(roe_qoq, "QoQ"))
     m4.metric("", "", _fmt_delta(roe_yoy, "YoY"), label_visibility="collapsed")
-    m5.metric("D/E", f"{de:.3f}", _fmt_delta(de_qoq, "QoQ"), delta_color="inverse")
-    m5.metric("", "", _fmt_delta(de_yoy, "YoY"), label_visibility="collapsed", delta_color="inverse")
+    m5.metric("ROA", f"{roa:.1f}%", _fmt_delta(roa_qoq, "QoQ"))
+    m5.metric("", "", _fmt_delta(roa_yoy, "YoY"), label_visibility="collapsed")
+    m6.metric("D/E", f"{de:.3f}", _fmt_delta(de_qoq, "QoQ"), delta_color="inverse")
+    m6.metric("", "", _fmt_delta(de_yoy, "YoY"), label_visibility="collapsed", delta_color="inverse")
 
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
