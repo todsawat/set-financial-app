@@ -12,6 +12,7 @@ Features:
 - Interactive Plotly charts
 """
 
+import io
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
@@ -97,6 +98,16 @@ st.markdown("""
             gap: 0.4rem 0.3rem;
         }
     }
+
+    /* Excel export button — small, right-aligned */
+    .st-key-xlsx_export { display: flex; justify-content: flex-end; margin-top: -0.5rem; }
+    .st-key-xlsx_export button {
+        font-size: 0.7rem !important;
+        padding: 0.15rem 0.5rem !important;
+        min-height: 0 !important;
+        height: auto !important;
+        line-height: 1.4 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -144,6 +155,20 @@ def color_negative_red(df_numeric: pd.DataFrame, is_ratio: bool = False):
         lambda x: fmt(x, is_ratio=is_ratio) if isinstance(x, (int, float)) else (str(x) if x else "-")
     ).applymap(_cell_style)  # type: ignore[attr-defined]
     return styled
+
+
+def _xlsx_download(df: pd.DataFrame, filename: str, key: str):
+    """Render a small Excel-icon download button aligned to the right."""
+    buf = io.BytesIO()
+    df.to_excel(buf, index=True, engine="openpyxl")
+    with st.container(key="xlsx_export"):
+        st.download_button(
+            label="\U0001F4E5 xlsx",
+            data=buf.getvalue(),
+            file_name=filename,
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            key=key,
+        )
 
 
 # ============================================================
@@ -1119,6 +1144,7 @@ def main():
             return [""] * len(row)
 
         st.dataframe(color_negative_red(inc_df).apply(hl_income, axis=1), use_container_width=True, height=440)
+        _xlsx_download(inc_df, f"{symbol}_income_statement.xlsx", key="dl_income")
 
         _show_chart(chart_finance_cost(income), key="income_finance_cost")
         _show_chart(chart_growth_yoy(income, view_mode), key="income_growth_yoy")
@@ -1223,6 +1249,7 @@ def main():
             bal_display.style.apply(hl_bal, axis=1),
             use_container_width=True, height=bal_height,
         )
+        _xlsx_download(bal_df, f"{symbol}_balance_sheet.xlsx", key="dl_balance")
         _show_chart(chart_balance_sheet(balance), key="bal_chart")
 
         cash_inv_fig = chart_cash_and_inventories(balance)
@@ -1270,6 +1297,7 @@ def main():
             ratio_display.style.applymap(_red_if_negative),  # type: ignore[attr-defined]
             use_container_width=True, height=420,
         )
+        _xlsx_download(ratio_df, f"{symbol}_ratios.xlsx", key="dl_ratios")
         _show_chart(chart_margins(ratios), key="ratios_margins")
         _show_chart(chart_roe_roa(ratios), key="ratios_roe_roa")
         _show_chart(chart_de_ratio(ratios), key="ratios_de")
@@ -1369,6 +1397,7 @@ def main():
                 use_container_width=True,
                 height=row_h,
             )
+            _xlsx_download(si_display_df, f"{symbol}_special_items.xlsx", key="dl_si")
 
             with st.expander("วิธีอ่านตาราง"):
                 st.markdown(
@@ -1400,6 +1429,7 @@ def main():
             return [""] * len(row)
 
         st.dataframe(color_negative_red(core_df_adj).apply(hl_core, axis=1), use_container_width=True, height=220)
+        _xlsx_download(core_df_adj, f"{symbol}_core_profit.xlsx", key="dl_core")
 
         # ── Section C: Chart (reacts to selection) ────────────────────────────
         _show_chart(chart_core_vs_reported(core_adj), key="core_chart")
@@ -1472,6 +1502,7 @@ def main():
         if cashflow:
             cf_df = cashflow_to_df(cashflow)
             st.dataframe(color_negative_red(cf_df), use_container_width=True, height=220)
+            _xlsx_download(cf_df, f"{symbol}_cashflow.xlsx", key="dl_cashflow")
             _show_chart(chart_cashflow(cashflow), key="cashflow_chart")
         else:
             st.info("ไม่มีข้อมูลกระแสเงินสด")
