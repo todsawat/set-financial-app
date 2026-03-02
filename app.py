@@ -100,13 +100,16 @@ st.markdown("""
     }
 
     /* Excel export button — small, right-aligned */
-    [class*="st-key-xlsx_export_"] { display: flex; justify-content: flex-end; margin-top: -0.5rem; }
+    [class*="st-key-xlsx_export_"] { margin-top: -0.5rem; }
+    [class*="st-key-xlsx_export_"] > div { display: flex; justify-content: flex-end; }
+    [class*="st-key-xlsx_export_"] > div > div { display: flex; justify-content: flex-end; }
     [class*="st-key-xlsx_export_"] button {
         font-size: 0.7rem !important;
         padding: 0.15rem 0.5rem !important;
         min-height: 0 !important;
         height: auto !important;
         line-height: 1.4 !important;
+        margin-left: auto !important;
     }
 </style>
 """, unsafe_allow_html=True)
