@@ -89,6 +89,15 @@ st.markdown("""
         /* Mobile: hide 5-col, show 3+2 */
         .st-key-desktop_metrics { display: none !important; }
         .st-key-mobile_metrics { display: block !important; }
+        /* Force mobile metrics columns to stay side-by-side */
+        .st-key-mobile_metrics div[data-testid="stHorizontalBlock"] {
+            flex-wrap: nowrap !important;
+        }
+        .st-key-mobile_metrics div[data-testid="column"] {
+            flex: 1 1 0 !important;
+            min-width: 0 !important;
+            width: auto !important;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
