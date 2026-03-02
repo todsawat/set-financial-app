@@ -765,6 +765,29 @@ def main():
                 st.toast(f"ไม่พบ cache ของ {_cur_sym}")
             st.rerun()
 
+        # ---- Feedback / Bug Report ----
+        st.markdown("---")
+        _gh_repo = "todsawat/set-financial-app"
+        _feat_url = (
+            f"https://github.com/{_gh_repo}/issues/new?"
+            "labels=enhancement&title=%5BFeature%5D+&body="
+            "%23%23+%E0%B8%AD%E0%B8%98%E0%B8%B4%E0%B8%9A%E0%B8%B2%E0%B8%A2%20Feature%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%95%E0%B9%89%E0%B8%AD%E0%B8%87%E0%B8%81%E0%B8%B2%E0%B8%A3%0A%0A"
+            "%23%23+%E0%B9%80%E0%B8%AB%E0%B8%95%E0%B8%B8%E0%B8%9C%E0%B8%A5%0A%0A"
+        )
+        _bug_url = (
+            f"https://github.com/{_gh_repo}/issues/new?"
+            "labels=bug&title=%5BBug%5D+&body="
+            "%23%23+%E0%B8%AD%E0%B8%B2%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B9%80%E0%B8%88%E0%B8%AD%0A%0A"
+            "%23%23+%E0%B8%82%E0%B8%B1%E0%B9%89%E0%B8%99%E0%B8%95%E0%B8%AD%E0%B8%99%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%97%E0%B8%B3%0A%0A"
+            "%23%23+%E0%B8%9C%E0%B8%A5%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%84%E0%B8%B2%E0%B8%94%E0%B8%AB%E0%B8%A7%E0%B8%B1%E0%B8%87%0A%0A"
+            "%23%23+%E0%B8%AD%E0%B8%B8%E0%B8%9B%E0%B8%81%E0%B8%A3%E0%B8%93%E0%B9%8C%20%2F%20Browser%0A%0A"
+        )
+        _fb_cols = st.columns(2)
+        with _fb_cols[0]:
+            st.link_button("Feature", _feat_url, use_container_width=True)
+        with _fb_cols[1]:
+            st.link_button("Bug", _bug_url, use_container_width=True, type="secondary")
+
         st.markdown("---")
         st.markdown(
             f"""
