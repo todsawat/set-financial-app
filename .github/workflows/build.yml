@@ -1,0 +1,199 @@
+name: Build Desktop App
+
+on:
+  # Build on push to main with tags, or manual trigger
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g. 1.0.0)'
+        required: false
+        default: 'dev'
+
+permissions:
+  contents: write  # needed to create releases
+
+jobs:
+  # ============================================================
+  # macOS Apple Silicon (.app)
+  # ============================================================
+  build-macos-arm64:
+    runs-on: macos-14  # Apple Silicon (M1/M2) runner
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Inject version from git tag
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION="${{ github.ref_name }}"
+            VERSION="${VERSION#v}"
+          else
+            VERSION="${{ github.event.inputs.version || 'dev' }}"
+          fi
+          echo "__version__ = \"${VERSION}\"" > version.py
+          echo "Version set to: ${VERSION}"
+          cat version.py
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          pip install -r requirements.txt
+
+      - name: Build with PyInstaller
+        run: pyinstaller SET-Financial-Analyzer.spec
+
+      - name: Create ZIP archive
+        run: |
+          cd dist
+          zip -r ../SET-Financial-Analyzer-macOS-arm64.zip SET-Financial-Analyzer.app
+          cd ..
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SET-Financial-Analyzer-macOS-arm64
+          path: SET-Financial-Analyzer-macOS-arm64.zip
+          retention-days: 30
+
+  # ============================================================
+  # macOS Intel (.app)
+  # ============================================================
+  build-macos-x64:
+    runs-on: macos-13  # Intel runner
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Inject version from git tag
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION="${{ github.ref_name }}"
+            VERSION="${VERSION#v}"
+          else
+            VERSION="${{ github.event.inputs.version || 'dev' }}"
+          fi
+          echo "__version__ = \"${VERSION}\"" > version.py
+          echo "Version set to: ${VERSION}"
+          cat version.py
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          pip install -r requirements.txt
+
+      - name: Build with PyInstaller
+        run: pyinstaller SET-Financial-Analyzer.spec
+
+      - name: Create ZIP archive
+        run: |
+          cd dist
+          zip -r ../SET-Financial-Analyzer-macOS-x64.zip SET-Financial-Analyzer.app
+          cd ..
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SET-Financial-Analyzer-macOS-x64
+          path: SET-Financial-Analyzer-macOS-x64.zip
+          retention-days: 30
+
+  # ============================================================
+  # Windows (.exe)
+  # ============================================================
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Inject version from git tag
+        shell: bash
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION="${{ github.ref_name }}"
+            VERSION="${VERSION#v}"
+          else
+            VERSION="${{ github.event.inputs.version || 'dev' }}"
+          fi
+          echo "__version__ = \"${VERSION}\"" > version.py
+          echo "Version set to: ${VERSION}"
+          cat version.py
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          pip install -r requirements.txt
+
+      - name: Build with PyInstaller
+        run: pyinstaller SET-Financial-Analyzer.spec
+
+      - name: Create ZIP archive
+        run: Compress-Archive -Path dist\SET-Financial-Analyzer.exe -DestinationPath SET-Financial-Analyzer-Windows-x64.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SET-Financial-Analyzer-Windows-x64
+          path: SET-Financial-Analyzer-Windows-x64.zip
+          retention-days: 30
+
+  # ============================================================
+  # Create GitHub Release (only on tag push)
+  # ============================================================
+  release:
+    needs: [build-macos-arm64, build-macos-x64, build-windows]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "SET Financial Analyzer ${{ github.ref_name }}"
+          body: |
+            ## SET Financial Analyzer ${{ github.ref_name }}
+
+            ### Downloads
+            - **macOS (Apple Silicon M1/M2/M3):** `SET-Financial-Analyzer-macOS-arm64.zip`
+            - **macOS (Intel):** `SET-Financial-Analyzer-macOS-x64.zip`
+            - **Windows:** `SET-Financial-Analyzer-Windows-x64.zip`
+
+            ### How to use
+            1. Download the ZIP for your platform
+            2. Extract the ZIP file
+            3. **macOS:** Double-click `SET-Financial-Analyzer.app`
+               - If blocked by Gatekeeper: Right-click > Open > Open
+            4. **Windows:** Double-click `SET-Financial-Analyzer.exe`
+               - If blocked by SmartScreen: Click "More info" > "Run anyway"
+            5. The app will open in your default browser automatically
+          draft: false
+          prerelease: false
+          files: |
+            artifacts/SET-Financial-Analyzer-macOS-arm64/SET-Financial-Analyzer-macOS-arm64.zip
+            artifacts/SET-Financial-Analyzer-macOS-x64/SET-Financial-Analyzer-macOS-x64.zip
+            artifacts/SET-Financial-Analyzer-Windows-x64/SET-Financial-Analyzer-Windows-x64.zip
