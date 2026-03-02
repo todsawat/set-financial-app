@@ -1724,12 +1724,13 @@ class SETScraper:
 
             # Skip if already cached
             cache_path = cache_dir / f"{year_ce}_{quarter}.json"
+            display_q = "งบปี" if quarter in ("Q9", "YE") else quarter
             if cache_path.exists():
-                _cb(f"งบ {quarter}/{year_ce} (cached)", idx + 1, total_news)
+                _cb(f"{display_q}/{year_ce} (cached)", idx + 1, total_news)
                 continue
 
             # Get download URL from news detail
-            _cb(f"ดาวน์โหลดงบ {quarter}/{year_ce}", idx + 1, total_news)
+            _cb(f"ดาวน์โหลด {display_q}/{year_ce}", idx + 1, total_news)
             detail = self.get_fs_news_detail(str(news_item["id"]))
             if not detail or not detail.get("downloadUrl"):
                 continue
