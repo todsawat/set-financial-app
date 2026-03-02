@@ -1119,6 +1119,22 @@ class SETScraper:
         (["กำไรขั้นต้น", "กำไร(ขาดทุน)ขั้นต้น",
           "กำไร (ขาดทุน) ขั้นต้น",
           "Gross profit", "Gross profit (loss)"], "gross_profit", False),
+        # Cost of sales / COGS — used to compute gross_profit when the XLSX
+        # does not have an explicit "กำไรขั้นต้น" line.
+        # Must NOT match "ต้นทุนทางการเงิน" (finance cost) or
+        # "ต้นทุนในการจัดจำหน่าย" (distribution cost).
+        (["ต้นทุนขายสินค้าและต้นทุนการให้บริการ",   # CPALL
+          "ต้นทุนขายสินค้าและการให้บริการ",           # common variant
+          "ต้นทุนขายและการให้บริการ",                  # TU
+          "ต้นทุนขายและบริการ",                        # HMPRO
+          "ต้นทุนค่ารักษาพยาบาลและต้นทุนขาย",       # BDMS
+          "ต้นทุนการให้บริการ",                        # BEM
+          "ต้นทุนขายสินค้า",                           # CPF
+          "ต้นทุนขาย",                                # DELTA, GFPT (general)
+          "Cost of sales and services",
+          "Cost of sales of goods and rendering of services",
+          "Cost of goods sold and services",
+          "Cost of sales", "Cost of services"], "cost_of_sales", False),
         (["กำไรจากการดำเนินงาน", "กำไร(ขาดทุน)จากการดำเนินงาน",
           "กำไร (ขาดทุน) จากการดำเนินงาน",  # MINT style with spaces
           "กำไรจากกิจกรรมดำเนินงาน", "กำไร(ขาดทุน)จากกิจกรรมดำเนินงาน",
@@ -1569,6 +1585,60 @@ class SETScraper:
         if sum_rev_cur > cur_tr * 1.05 and sum_rev_cur > 0:
             income["total_revenue"] = {"current": sum_rev_cur, "prev": sum_rev_prev}
 
+        # Fallback 2.5: if sales line is missing but total_revenue exists,
+        # estimate sales as total_revenue - other_revenue.
+        if "sales" not in income and "total_revenue" in income:
+            tr = income["total_revenue"]
+            oth = income.get("other_revenue", {"current": 0, "prev": 0})
+            tr_cur = tr.get("current", 0) or 0
+            tr_prev = tr.get("prev", 0) or 0
+            oth_cur = oth.get("current", 0) or 0
+            oth_prev = oth.get("prev", 0) or 0
+            est_cur = tr_cur - oth_cur
+            est_prev = tr_prev - oth_prev
+            if est_cur > 0 or est_prev > 0:
+                income["sales"] = {
+                    "current": est_cur if est_cur > 0 else 0,
+                    "prev": est_prev if est_prev > 0 else 0,
+                }
+
+        # Fallback 3: compute gross_profit from sales − cost_of_sales when
+        # the XLSX has no explicit "กำไรขั้นต้น" line (e.g. CPALL, BDMS, HMPRO).
+        # COGS in SET XLSX is usually positive (expense reported as positive) or
+        # negative (already signed as deduction).  We use abs() to normalise.
+        #
+        # Sub-fallback 3b: if _extract_key_items did not find cost_of_sales
+        # but there ARE rows starting with "ต้นทุน" (excluding finance cost),
+        # sum them up as total COGS.  This handles MINT-style multi-line COGS.
+        if "gross_profit" not in income and "sales" in income:
+            if "cost_of_sales" not in income:
+                # Sum all "ต้นทุน" rows excluding finance cost / distribution cost
+                _cogs_exclude = ("ต้นทุนทางการเงิน", "ต้นทุนในการจัดจำหน่าย",
+                                 "Finance cost", "Finance costs")
+                _cogs_prefixes = ("ต้นทุน", "Cost of")
+                cogs_cur = 0.0
+                cogs_prev = 0.0
+                for r in inc_rows:
+                    lbl = r.get("label", "")
+                    if (any(lbl.startswith(p) for p in _cogs_prefixes)
+                            and not any(lbl.startswith(ex) for ex in _cogs_exclude)):
+                        cogs_cur += abs(float(r.get("consolidated_current", 0) or 0))
+                        cogs_prev += abs(float(r.get("consolidated_prev", 0) or 0))
+                if cogs_cur > 0:
+                    income["cost_of_sales"] = {"current": cogs_cur, "prev": cogs_prev}
+
+            if "cost_of_sales" in income:
+                s = income["sales"]
+                c = income["cost_of_sales"]
+                s_cur = s.get("current", 0) or 0
+                s_prev = s.get("prev", 0) or 0
+                c_cur = abs(c.get("current", 0) or 0)
+                c_prev = abs(c.get("prev", 0) or 0)
+                income["gross_profit"] = {
+                    "current": s_cur - c_cur,
+                    "prev": s_prev - c_prev,
+                }
+
         # Detect unit from any parsed sheet's metadata
         unit = "baht"  # default assumption
         for key in ("income_statement", "balance_sheet", "cashflow"):
@@ -1591,6 +1661,48 @@ class SETScraper:
         income_9m: dict = {}
         if cum_rows:
             income_9m = self._extract_key_items(cum_rows, self._INCOME_KEYS)
+            if "sales" not in income_9m and "total_revenue" in income_9m:
+                tr9 = income_9m["total_revenue"]
+                oth9 = income_9m.get("other_revenue", {"current": 0, "prev": 0})
+                tr9_cur = tr9.get("current", 0) or 0
+                tr9_prev = tr9.get("prev", 0) or 0
+                oth9_cur = oth9.get("current", 0) or 0
+                oth9_prev = oth9.get("prev", 0) or 0
+                est9_cur = tr9_cur - oth9_cur
+                est9_prev = tr9_prev - oth9_prev
+                if est9_cur > 0 or est9_prev > 0:
+                    income_9m["sales"] = {
+                        "current": est9_cur if est9_cur > 0 else 0,
+                        "prev": est9_prev if est9_prev > 0 else 0,
+                    }
+            # Apply same gross_profit fallback to cumulative 9M income
+            if "gross_profit" not in income_9m and "sales" in income_9m:
+                if "cost_of_sales" not in income_9m:
+                    _cogs_exclude_9m = ("ต้นทุนทางการเงิน", "ต้นทุนในการจัดจำหน่าย",
+                                        "Finance cost", "Finance costs")
+                    _cogs_prefixes_9m = ("ต้นทุน", "Cost of")
+                    cogs_cur_9m = 0.0
+                    cogs_prev_9m = 0.0
+                    for r9 in cum_rows:
+                        lbl9 = r9.get("label", "")
+                        if (any(lbl9.startswith(p) for p in _cogs_prefixes_9m)
+                                and not any(lbl9.startswith(ex) for ex in _cogs_exclude_9m)):
+                            cogs_cur_9m += abs(float(r9.get("consolidated_current", 0) or 0))
+                            cogs_prev_9m += abs(float(r9.get("consolidated_prev", 0) or 0))
+                    if cogs_cur_9m > 0:
+                        income_9m["cost_of_sales"] = {"current": cogs_cur_9m, "prev": cogs_prev_9m}
+
+                if "cost_of_sales" in income_9m:
+                    s9 = income_9m["sales"]
+                    c9 = income_9m["cost_of_sales"]
+                    s9_cur = s9.get("current", 0) or 0
+                    s9_prev = s9.get("prev", 0) or 0
+                    c9_cur = abs(c9.get("current", 0) or 0)
+                    c9_prev = abs(c9.get("prev", 0) or 0)
+                    income_9m["gross_profit"] = {
+                        "current": s9_cur - c9_cur,
+                        "prev": s9_prev - c9_prev,
+                    }
 
         return {
             "period_description": period_desc,
@@ -1632,7 +1744,18 @@ class SETScraper:
             if age < 6 * 3600:
                 try:
                     with open(cache_file, "r") as f:
-                        return json.load(f)
+                        cached = json.load(f)
+                    # Cache migration guard: if cached quarterly entries have
+                    # neither gross_profit nor cost_of_sales, force refresh.
+                    q_cached = cached.get("quarterly_xlsx_data", [])
+                    stale = False
+                    for qd in q_cached:
+                        inc = qd.get("income", {})
+                        if "gross_profit" not in inc and "cost_of_sales" not in inc:
+                            stale = True
+                            break
+                    if not stale:
+                        return cached
                 except Exception:
                     pass
 
@@ -1722,12 +1845,28 @@ class SETScraper:
             if not year_ce:
                 continue
 
-            # Skip if already cached
+            # Skip if already cached (unless stale cache missing GP/COGS fields)
             cache_path = cache_dir / f"{year_ce}_{quarter}.json"
             display_q = "งบปี" if quarter in ("Q9", "YE") else quarter
             if cache_path.exists():
-                _cb(f"{display_q}/{year_ce} (cached)", idx + 1, total_news)
-                continue
+                stale_cache = False
+                try:
+                    with open(cache_path, "r") as f:
+                        cached_q = json.load(f)
+                    inc_cached = cached_q.get("income", {})
+                    if "gross_profit" not in inc_cached and "cost_of_sales" not in inc_cached:
+                        stale_cache = True
+                except Exception:
+                    stale_cache = True
+
+                if stale_cache:
+                    try:
+                        cache_path.unlink()
+                    except Exception:
+                        pass
+                else:
+                    _cb(f"{display_q}/{year_ce} (cached)", idx + 1, total_news)
+                    continue
 
             # Get download URL from news detail
             _cb(f"ดาวน์โหลด {display_q}/{year_ce}", idx + 1, total_news)
@@ -1816,13 +1955,29 @@ class SETScraper:
             pass
 
     def _load_all_quarterly_cache(self, symbol: str) -> list[dict]:
-        """Load all cached quarterly summaries, newest first."""
+        """Load all cached quarterly summaries, newest first.
+
+        Invalidates (deletes) cache files that are missing gross_profit
+        and cost_of_sales data — forces re-download
+        so the new COGS extraction logic can populate them.
+        """
         cache_dir = self._quarterly_cache_dir(symbol)
         results = []
         for path in sorted(cache_dir.glob("*.json"), reverse=True):
             try:
                 with open(path, "r") as f:
-                    results.append(json.load(f))
+                    data = json.load(f)
+                # Cache migration: if neither gross_profit nor cost_of_sales
+                # are present, invalidate this cache entry
+                # so it gets re-downloaded with the updated parser.
+                inc = data.get("income", {})
+                if "gross_profit" not in inc and "cost_of_sales" not in inc:
+                    try:
+                        path.unlink()
+                    except Exception:
+                        pass
+                    continue
+                results.append(data)
             except Exception:
                 pass
         return results

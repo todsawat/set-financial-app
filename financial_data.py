@@ -573,6 +573,12 @@ def _xlsx_quarter_to_row(q_data: dict, label: str, col: str = "current") -> dict
         total_revenue = sales + other_rev
     net_profit = v(inc, "ni_owners") or v(inc, "net_profit")
     gross_profit = v(inc, "gross_profit")
+    # Fallback: compute gross_profit from sales − cost_of_sales when the XLSX
+    # has no explicit "กำไรขั้นต้น" line (e.g. CPALL, BDMS, HMPRO).
+    if not gross_profit and sales:
+        cogs = v(inc, "cost_of_sales")
+        if cogs:
+            gross_profit = sales - abs(cogs)
     operating_profit = v(inc, "operating_profit")
     eps_val = _get_val(inc, "eps", col)  # EPS stays in Baht (per share)
     depreciation = v(inc, "depreciation")
@@ -621,6 +627,7 @@ def _xlsx_quarter_to_row(q_data: dict, label: str, col: str = "current") -> dict
         "other_revenue": v(inc, "other_revenue"),
         "total_expense": v(inc, "total_expense"),
         "gross_profit": gross_profit,
+        "cost_of_sales": v(inc, "cost_of_sales"),
         "finance_cost": v(inc, "finance_cost"),
         "tax_expense": v(inc, "tax_expense"),
         "ebit": operating_profit,
@@ -1195,7 +1202,7 @@ def _add_q4_rows_from_xlsx(
 
     flow_fields = [
         "total_revenue", "sales", "other_revenue", "total_expense",
-        "gross_profit",
+        "gross_profit", "cost_of_sales",
         "finance_cost", "tax_expense",
         "ebit", "ebitda", "net_profit", "core_profit",
         "profit_from_other_activity",
@@ -1302,7 +1309,7 @@ def _add_q4_rows(rows: list[dict], annual_data: list[dict]):
 
     flow_fields = [
         "total_revenue", "sales", "other_revenue", "total_expense",
-        "gross_profit",
+        "gross_profit", "cost_of_sales",
         "finance_cost", "tax_expense",
         "ebit", "ebitda", "net_profit", "core_profit",
         "cf_operating", "cf_investing", "cf_financing", "cf_net",
