@@ -68,6 +68,15 @@ st.markdown("""
         font-size: 0.75rem !important;
     }
 
+    /* ซ่อน Streamlit header bar (hamburger menu + Deploy) ไม่ให้บังเนื้อหา */
+    header[data-testid="stHeader"] {
+        display: none !important;
+    }
+    /* ลด top padding ที่ Streamlit เว้นไว้สำหรับ header */
+    .block-container {
+        padding-top: 1rem !important;
+    }
+
     /* ===== Mobile: ปรับแค่ font + table scroll เท่านั้น ===== */
     @media (max-width: 768px) {
         .main-header { font-size: 1.4rem !important; }
