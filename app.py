@@ -89,47 +89,11 @@ st.markdown("""
         /* Mobile: hide 5-col, show 3+2 */
         .st-key-desktop_metrics { display: none !important; }
         .st-key-mobile_metrics { display: block !important; }
-        /* Mobile metrics: columns เรียงข้างกัน ชิดๆ */
-        .st-key-mobile_metrics div[data-testid="stHorizontalBlock"] {
-            flex-wrap: nowrap !important;
-            gap: 0 !important;
-            margin-bottom: 0.3rem !important;
-        }
-        .st-key-mobile_metrics div[data-testid="column"] {
-            flex: 1 1 0 !important;
-            min-width: 0 !important;
-            width: auto !important;
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-        /* แนวตั้ง: QoQ/YoY ห่างกันนิดเดียว */
-        .st-key-mobile_metrics div[data-testid="stVerticalBlock"],
-        .st-key-mobile_metrics div[data-testid="stVerticalBlockBorderWrapper"] {
-            gap: 0.15rem !important;
-        }
-        .st-key-mobile_metrics div[data-testid="stMetric"] {
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-        /* Font ให้พอดี 3 คอลัมน์ */
-        .st-key-mobile_metrics div[data-testid="stMetricValue"] {
-            font-size: 1rem !important;
-        }
-        .st-key-mobile_metrics div[data-testid="stMetricLabel"] {
-            font-size: 0.7rem !important;
-        }
-        .st-key-mobile_metrics div[data-testid="stMetricDelta"] {
-            font-size: 0.65rem !important;
-        }
-        /* ลบ gap ทุก element ภายใน container */
-        .st-key-mobile_metrics,
-        .st-key-mobile_metrics * {
-            gap: 0 !important;
-            column-gap: 0 !important;
-            row-gap: 0.15rem !important;
-        }
-        .st-key-mobile_metrics div[data-testid="stHorizontalBlock"] {
-            row-gap: 0 !important;
+        /* Mobile metrics: CSS grid 3 columns ชิดกัน */
+        .mobile-metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.4rem 0.3rem;
         }
     }
 </style>
@@ -1005,15 +969,40 @@ def main():
         _render_metric(m4, "ROE", f"{roe:.1f}%", _fmt_delta(roe_qoq, "QoQ"), _fmt_delta(roe_yoy, "YoY"))
         _render_metric(m5, "D/E", f"{de:.3f}", _fmt_delta(de_qoq, "QoQ"), _fmt_delta(de_yoy, "YoY"), delta_color="inverse")
 
-    # Mobile layout: 3 + 2 columns (hidden on desktop via CSS)
+    # Mobile layout: pure HTML grid (hidden on desktop via CSS)
+    def _delta_html(val, label, inverse=False):
+        if val is None:
+            return f'<span style="color:#888;font-size:0.7rem;">{label}: N/A</span>'
+        color = "#09ab3b" if val > 0 else "#ff2b2b" if val < 0 else "#888"
+        if inverse:
+            color = "#ff2b2b" if val > 0 else "#09ab3b" if val < 0 else "#888"
+        arrow = "▲" if val > 0 else "▼" if val < 0 else ""
+        return f'<span style="color:{color};font-size:0.7rem;">{arrow} {val:+.1f}% {label}</span>'
+
+    def _metric_html(label, value, d1, d2, inverse=False):
+        return f'''<div style="padding:2px 0;">
+            <div style="font-size:0.7rem;color:#888;">{label}</div>
+            <div style="font-size:1.05rem;font-weight:700;">{value}</div>
+            <div>{_delta_html(d1[0], d1[1], inverse)}</div>
+            <div>{_delta_html(d2[0], d2[1], inverse)}</div>
+        </div>'''
+
+    _mobile_html = f'''
+    <div class="mobile-metrics-grid">
+        {_metric_html(f"Revenue ({latest['period']})", fmt(latest["total_revenue"]),
+                      (rev_qoq, "QoQ"), (rev_yoy, "YoY"))}
+        {_metric_html("Net Profit", fmt(latest["net_profit"]),
+                      (ni_qoq, "QoQ"), (ni_yoy, "YoY"))}
+        {_metric_html("Core Profit", fmt(cp_curr),
+                      (cp_qoq, "QoQ"), (cp_yoy, "YoY"))}
+        {_metric_html("ROE", f"{roe:.1f}%",
+                      (roe_qoq, "QoQ"), (roe_yoy, "YoY"))}
+        {_metric_html("D/E", f"{de:.3f}",
+                      (de_qoq, "QoQ"), (de_yoy, "YoY"), inverse=True)}
+    </div>
+    '''
     with st.container(key="mobile_metrics"):
-        a1, a2, a3 = st.columns(3)
-        _render_metric(a1, f"Revenue ({latest['period']})", fmt(latest["total_revenue"]), _fmt_delta(rev_qoq, "QoQ"), _fmt_delta(rev_yoy, "YoY"))
-        _render_metric(a2, "Net Profit", fmt(latest["net_profit"]), _fmt_delta(ni_qoq, "QoQ"), _fmt_delta(ni_yoy, "YoY"))
-        _render_metric(a3, "Core Profit", fmt(cp_curr), _fmt_delta(cp_qoq, "QoQ"), _fmt_delta(cp_yoy, "YoY"))
-        b1, b2, b3 = st.columns(3)
-        _render_metric(b1, "ROE", f"{roe:.1f}%", _fmt_delta(roe_qoq, "QoQ"), _fmt_delta(roe_yoy, "YoY"))
-        _render_metric(b2, "D/E", f"{de:.3f}", _fmt_delta(de_qoq, "QoQ"), _fmt_delta(de_yoy, "YoY"), delta_color="inverse")
+        st.markdown(_mobile_html, unsafe_allow_html=True)
 
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
