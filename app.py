@@ -784,9 +784,9 @@ def main():
         )
         _fb_cols = st.columns(2)
         with _fb_cols[0]:
-            st.link_button("Feature", _feat_url, use_container_width=True)
+            st.link_button("เสนอ Feature ใหม่", _feat_url, use_container_width=True)
         with _fb_cols[1]:
-            st.link_button("Bug", _bug_url, use_container_width=True, type="secondary")
+            st.link_button("แจ้ง Bug", _bug_url, use_container_width=True, type="secondary")
 
         st.markdown("---")
         st.markdown(
