@@ -37,7 +37,7 @@ st.set_page_config(
     page_title="SET Financial Analyzer",
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="auto",
     menu_items={},
 )
 
@@ -45,6 +45,7 @@ st.set_page_config(
 # Custom CSS
 # ============================================================
 st.markdown("""
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
     /* ลด gap ระหว่าง metric QoQ/YoY */
     div[data-testid="stMetric"] { margin-bottom: -1.2rem !important; }
@@ -66,6 +67,79 @@ st.markdown("""
     /* ปุ่มตัวอย่าง symbol ใน sidebar ให้ font เล็กลง */
     section[data-testid="stSidebar"] button[kind="secondary"] p {
         font-size: 0.75rem !important;
+    }
+
+    /* ===== Responsive: Tablet (<=768px) ===== */
+    @media (max-width: 768px) {
+        .main-header { font-size: 1.3rem !important; }
+        .sub-header { font-size: 0.8rem !important; margin-bottom: 0.8rem !important; }
+        div[data-testid="stMetricValue"] { font-size: 1rem !important; }
+        div[data-testid="stMetricLabel"] { font-size: 0.7rem !important; }
+        div[data-testid="stMetricDelta"] { font-size: 0.65rem !important; }
+
+        /* Stack columns vertically on mobile */
+        div[data-testid="column"] {
+            width: 100% !important;
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
+        }
+        /* Metrics: 2 columns per row instead of 5 */
+        div[data-testid="stHorizontalBlock"]:has(> div[data-testid="column"]:nth-child(5)) > div[data-testid="column"] {
+            width: 48% !important;
+            flex: 1 1 48% !important;
+            min-width: 48% !important;
+        }
+        /* Reduce padding */
+        .block-container { padding: 1rem 0.5rem !important; }
+        /* Tabs: smaller font */
+        button[data-baseweb="tab"] { font-size: 0.7rem !important; padding: 0.3rem 0.4rem !important; }
+        /* Dataframe scroll */
+        div[data-testid="stDataFrame"] { overflow-x: auto !important; }
+    }
+
+    /* ===== Responsive: Phone (<=480px) ===== */
+    @media (max-width: 480px) {
+        .main-header { font-size: 1.1rem !important; }
+        .sub-header { font-size: 0.72rem !important; }
+        div[data-testid="stMetricValue"] { font-size: 0.9rem !important; }
+        /* Metrics: stack single column */
+        div[data-testid="stHorizontalBlock"]:has(> div[data-testid="column"]:nth-child(5)) > div[data-testid="column"] {
+            width: 100% !important;
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
+        }
+        button[data-baseweb="tab"] { font-size: 0.6rem !important; padding: 0.2rem 0.3rem !important; }
+        .block-container { padding: 0.5rem 0.3rem !important; }
+    }
+
+    /* ===== Charts: reduce height on small screens ===== */
+    @media (max-width: 768px) {
+        div[data-testid="stPlotlyChart"] > div > div > svg.main-svg {
+            max-height: 320px !important;
+        }
+        div[data-testid="stPlotlyChart"] iframe,
+        div[data-testid="stPlotlyChart"] > div {
+            max-height: 340px !important;
+        }
+        /* Dataframe: limit height and allow scroll */
+        div[data-testid="stDataFrame"] > div {
+            max-height: 300px !important;
+            overflow: auto !important;
+        }
+    }
+
+    /* ===== Ensure horizontal scrollability for tables ===== */
+    div[data-testid="stDataFrame"] {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* ===== Tabs: allow wrapping on narrow screens ===== */
+    @media (max-width: 768px) {
+        div[data-baseweb="tab-list"] {
+            flex-wrap: wrap !important;
+            gap: 2px !important;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -138,12 +212,15 @@ def _add_year_dividers(fig: "go.Figure", periods: list[str]) -> None:
                 layer="below",
             )
     # Rotate x-axis period labels to vertical for readability
-    # Add border frame around the plot area
+    # Add border frame around the plot area + responsive margins
     _axis_border = dict(showline=True, linewidth=1, linecolor="black", mirror=True)
     fig.update_layout(
         xaxis_tickangle=-90,
         xaxis=_axis_border,
         yaxis=_axis_border,
+        margin=dict(l=40, r=20, t=50, b=60),
+        legend=dict(font=dict(size=10)),
+        autosize=True,
     )
     # Also apply to secondary y-axis if present (e.g. dual-axis charts)
     if hasattr(fig, "layout") and getattr(fig.layout, "yaxis2", None) is not None:
@@ -685,7 +762,7 @@ def main():
         examples = ["AOT", "PTT", "CPALL", "SCC", "ADVANC", "BDMS", "KBANK", "GULF", "CPN"]
         for i, sym in enumerate(examples):
             col = example_cols[i % 3]
-            col.button(sym, key=f"btn_{sym}", width="stretch",
+            col.button(sym, key=f"btn_{sym}", use_container_width=True,
                        on_click=_set_symbol, args=(sym,))
 
         # ---- Clear cache button ----
@@ -918,22 +995,22 @@ def main():
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
     # ---- Tabs ----
-    tab_names = ["Overview Charts", "Income Statement", "Balance Sheet",
-                  "Financial Ratios", "Core Profit Analysis", "Cash Flow"]
+    tab_names = ["Overview", "Income", "Balance Sheet",
+                  "Ratios", "Core Profit", "Cash Flow"]
     tabs = st.tabs(tab_names)
 
     # ==== TAB 0: Overview ====
     with tabs[0]:
-        st.plotly_chart(chart_revenue_profit(income), width="stretch", key="overview_revenue")
-        st.plotly_chart(chart_growth_yoy(income, view_mode), width="stretch", key="overview_growth_yoy")
+        st.plotly_chart(chart_revenue_profit(income), use_container_width=True, key="overview_revenue")
+        st.plotly_chart(chart_growth_yoy(income, view_mode), use_container_width=True, key="overview_growth_yoy")
         if view_mode == "quarterly":
-            st.plotly_chart(chart_growth_qoq(income), width="stretch", key="overview_growth_qoq")
-        st.plotly_chart(chart_margins(ratios), width="stretch", key="overview_margins")
-        st.plotly_chart(chart_roe_roa(ratios), width="stretch", key="overview_roe_roa")
-        st.plotly_chart(chart_de_ratio(ratios), width="stretch", key="overview_de")
-        st.plotly_chart(chart_tax_rate(ratios, income), width="stretch", key="overview_tax")
-        st.plotly_chart(chart_finance_cost(income), width="stretch", key="overview_finance_cost")
-        st.plotly_chart(chart_core_vs_reported(core), width="stretch", key="overview_core")
+            st.plotly_chart(chart_growth_qoq(income), use_container_width=True, key="overview_growth_qoq")
+        st.plotly_chart(chart_margins(ratios), use_container_width=True, key="overview_margins")
+        st.plotly_chart(chart_roe_roa(ratios), use_container_width=True, key="overview_roe_roa")
+        st.plotly_chart(chart_de_ratio(ratios), use_container_width=True, key="overview_de")
+        st.plotly_chart(chart_tax_rate(ratios, income), use_container_width=True, key="overview_tax")
+        st.plotly_chart(chart_finance_cost(income), use_container_width=True, key="overview_finance_cost")
+        st.plotly_chart(chart_core_vs_reported(core), use_container_width=True, key="overview_core")
 
     # ==== TAB 1: Income Statement ====
     with tabs[1]:
@@ -961,12 +1038,12 @@ def main():
                 return ["background-color:#e65100; color:#ffffff; font-style:italic"] * len(row)
             return [""] * len(row)
 
-        st.dataframe(color_negative_red(inc_df).apply(hl_income, axis=1), width="stretch", height=440)
+        st.dataframe(color_negative_red(inc_df).apply(hl_income, axis=1), use_container_width=True, height=440)
 
-        st.plotly_chart(chart_finance_cost(income), width="stretch", key="income_finance_cost")
-        st.plotly_chart(chart_growth_yoy(income, view_mode), width="stretch", key="income_growth_yoy")
+        st.plotly_chart(chart_finance_cost(income), use_container_width=True, key="income_finance_cost")
+        st.plotly_chart(chart_growth_yoy(income, view_mode), use_container_width=True, key="income_growth_yoy")
         if view_mode == "quarterly":
-            st.plotly_chart(chart_growth_qoq(income), width="stretch", key="income_growth_qoq")
+            st.plotly_chart(chart_growth_qoq(income), use_container_width=True, key="income_growth_qoq")
 
     # ==== TAB 2: Balance Sheet ====
     with tabs[2]:
@@ -1063,13 +1140,13 @@ def main():
         bal_height = 340 if len(bal_df) > 4 else 220
         st.dataframe(
             bal_display.style.apply(hl_bal, axis=1),
-            width="stretch", height=bal_height,
+            use_container_width=True, height=bal_height,
         )
-        st.plotly_chart(chart_balance_sheet(balance), width="stretch", key="bal_chart")
+        st.plotly_chart(chart_balance_sheet(balance), use_container_width=True, key="bal_chart")
 
         cash_inv_fig = chart_cash_and_inventories(balance)
         if cash_inv_fig is not None:
-            st.plotly_chart(cash_inv_fig, width="stretch", key="bal_cash_inv_chart")
+            st.plotly_chart(cash_inv_fig, use_container_width=True, key="bal_cash_inv_chart")
 
     # ==== TAB 3: Financial Ratios ====
     with tabs[3]:
@@ -1110,12 +1187,12 @@ def main():
 
         st.dataframe(
             ratio_display.style.applymap(_red_if_negative),  # type: ignore[attr-defined]
-            width="stretch", height=420,
+            use_container_width=True, height=420,
         )
-        st.plotly_chart(chart_margins(ratios), width="stretch", key="ratios_margins")
-        st.plotly_chart(chart_roe_roa(ratios), width="stretch", key="ratios_roe_roa")
-        st.plotly_chart(chart_de_ratio(ratios), width="stretch", key="ratios_de")
-        st.plotly_chart(chart_tax_rate(ratios, income), width="stretch", key="ratios_tax")
+        st.plotly_chart(chart_margins(ratios), use_container_width=True, key="ratios_margins")
+        st.plotly_chart(chart_roe_roa(ratios), use_container_width=True, key="ratios_roe_roa")
+        st.plotly_chart(chart_de_ratio(ratios), use_container_width=True, key="ratios_de")
+        st.plotly_chart(chart_tax_rate(ratios, income), use_container_width=True, key="ratios_tax")
 
     # ==== TAB 4: Core Profit ====
     with tabs[4]:
@@ -1208,7 +1285,7 @@ def main():
             row_h = max(200, min(42 * n_rows + 55, 640))
             st.dataframe(
                 si_display_df.style.apply(hl_si, axis=1),
-                width="stretch",
+                use_container_width=True,
                 height=row_h,
             )
 
@@ -1241,10 +1318,10 @@ def main():
                 return ["background-color:#bf360c; color:#ffffff"] * len(row)
             return [""] * len(row)
 
-        st.dataframe(color_negative_red(core_df_adj).apply(hl_core, axis=1), width="stretch", height=220)
+        st.dataframe(color_negative_red(core_df_adj).apply(hl_core, axis=1), use_container_width=True, height=220)
 
         # ── Section C: Chart (reacts to selection) ────────────────────────────
-        st.plotly_chart(chart_core_vs_reported(core_adj), width="stretch", key="core_chart")
+        st.plotly_chart(chart_core_vs_reported(core_adj), use_container_width=True, key="core_chart")
 
         # ── Section D: Core Profit Growth (reacts to selection) ──────────────
         if len(core_adj) > 1:
@@ -1294,7 +1371,7 @@ def main():
                 legend=dict(orientation="h", y=1.1, x=0.5, xanchor="center"),
             )
             _add_year_dividers(fig_cg, _periods_adj)
-            st.plotly_chart(fig_cg, width="stretch", key="core_growth")
+            st.plotly_chart(fig_cg, use_container_width=True, key="core_growth")
 
 
 
@@ -1312,8 +1389,8 @@ def main():
 
         if cashflow:
             cf_df = cashflow_to_df(cashflow)
-            st.dataframe(color_negative_red(cf_df), width="stretch", height=220)
-            st.plotly_chart(chart_cashflow(cashflow), width="stretch", key="cashflow_chart")
+            st.dataframe(color_negative_red(cf_df), use_container_width=True, height=220)
+            st.plotly_chart(chart_cashflow(cashflow), use_container_width=True, key="cashflow_chart")
         else:
             st.info("ไม่มีข้อมูลกระแสเงินสด")
 
