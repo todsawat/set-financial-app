@@ -74,8 +74,8 @@ st.markdown("""
     }
 
     /* Desktop: show 5-col, hide 3+2 */
-    .mobile-metrics { display: none; }
-    .desktop-metrics { display: block; }
+    .st-key-mobile_metrics { display: none; }
+    .st-key-desktop_metrics { display: block; }
 
     /* ===== Mobile ===== */
     @media (max-width: 768px) {
@@ -87,8 +87,8 @@ st.markdown("""
             -webkit-overflow-scrolling: touch;
         }
         /* Mobile: hide 5-col, show 3+2 */
-        .desktop-metrics { display: none !important; }
-        .mobile-metrics { display: block !important; }
+        .st-key-desktop_metrics { display: none !important; }
+        .st-key-mobile_metrics { display: block !important; }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -954,26 +954,24 @@ def main():
         col.metric(label, value, delta1, delta_color=delta_color)
         col.metric("", "", delta2, label_visibility="collapsed", delta_color=delta_color)
 
-    # Desktop layout: 5 columns in 1 row (hidden on mobile)
-    st.markdown('<div class="desktop-metrics">', unsafe_allow_html=True)
-    m1, m2, m3, m4, m5 = st.columns(5)
-    _render_metric(m1, f"Revenue ({latest['period']})", fmt(latest["total_revenue"]), _fmt_delta(rev_qoq, "QoQ"), _fmt_delta(rev_yoy, "YoY"))
-    _render_metric(m2, "Net Profit", fmt(latest["net_profit"]), _fmt_delta(ni_qoq, "QoQ"), _fmt_delta(ni_yoy, "YoY"))
-    _render_metric(m3, "Core Profit", fmt(cp_curr), _fmt_delta(cp_qoq, "QoQ"), _fmt_delta(cp_yoy, "YoY"))
-    _render_metric(m4, "ROE", f"{roe:.1f}%", _fmt_delta(roe_qoq, "QoQ"), _fmt_delta(roe_yoy, "YoY"))
-    _render_metric(m5, "D/E", f"{de:.3f}", _fmt_delta(de_qoq, "QoQ"), _fmt_delta(de_yoy, "YoY"), delta_color="inverse")
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Desktop layout: 5 columns in 1 row (hidden on mobile via CSS)
+    with st.container(key="desktop_metrics"):
+        m1, m2, m3, m4, m5 = st.columns(5)
+        _render_metric(m1, f"Revenue ({latest['period']})", fmt(latest["total_revenue"]), _fmt_delta(rev_qoq, "QoQ"), _fmt_delta(rev_yoy, "YoY"))
+        _render_metric(m2, "Net Profit", fmt(latest["net_profit"]), _fmt_delta(ni_qoq, "QoQ"), _fmt_delta(ni_yoy, "YoY"))
+        _render_metric(m3, "Core Profit", fmt(cp_curr), _fmt_delta(cp_qoq, "QoQ"), _fmt_delta(cp_yoy, "YoY"))
+        _render_metric(m4, "ROE", f"{roe:.1f}%", _fmt_delta(roe_qoq, "QoQ"), _fmt_delta(roe_yoy, "YoY"))
+        _render_metric(m5, "D/E", f"{de:.3f}", _fmt_delta(de_qoq, "QoQ"), _fmt_delta(de_yoy, "YoY"), delta_color="inverse")
 
-    # Mobile layout: 3 + 2 columns (hidden on desktop)
-    st.markdown('<div class="mobile-metrics">', unsafe_allow_html=True)
-    a1, a2, a3 = st.columns(3)
-    _render_metric(a1, f"Revenue ({latest['period']})", fmt(latest["total_revenue"]), _fmt_delta(rev_qoq, "QoQ"), _fmt_delta(rev_yoy, "YoY"))
-    _render_metric(a2, "Net Profit", fmt(latest["net_profit"]), _fmt_delta(ni_qoq, "QoQ"), _fmt_delta(ni_yoy, "YoY"))
-    _render_metric(a3, "Core Profit", fmt(cp_curr), _fmt_delta(cp_qoq, "QoQ"), _fmt_delta(cp_yoy, "YoY"))
-    b1, b2, b3 = st.columns(3)
-    _render_metric(b1, "ROE", f"{roe:.1f}%", _fmt_delta(roe_qoq, "QoQ"), _fmt_delta(roe_yoy, "YoY"))
-    _render_metric(b2, "D/E", f"{de:.3f}", _fmt_delta(de_qoq, "QoQ"), _fmt_delta(de_yoy, "YoY"), delta_color="inverse")
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Mobile layout: 3 + 2 columns (hidden on desktop via CSS)
+    with st.container(key="mobile_metrics"):
+        a1, a2, a3 = st.columns(3)
+        _render_metric(a1, f"Revenue ({latest['period']})", fmt(latest["total_revenue"]), _fmt_delta(rev_qoq, "QoQ"), _fmt_delta(rev_yoy, "YoY"))
+        _render_metric(a2, "Net Profit", fmt(latest["net_profit"]), _fmt_delta(ni_qoq, "QoQ"), _fmt_delta(ni_yoy, "YoY"))
+        _render_metric(a3, "Core Profit", fmt(cp_curr), _fmt_delta(cp_qoq, "QoQ"), _fmt_delta(cp_yoy, "YoY"))
+        b1, b2, b3 = st.columns(3)
+        _render_metric(b1, "ROE", f"{roe:.1f}%", _fmt_delta(roe_qoq, "QoQ"), _fmt_delta(roe_yoy, "YoY"))
+        _render_metric(b2, "D/E", f"{de:.3f}", _fmt_delta(de_qoq, "QoQ"), _fmt_delta(de_yoy, "YoY"), delta_color="inverse")
 
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
