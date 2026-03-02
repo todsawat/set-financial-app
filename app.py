@@ -45,7 +45,6 @@ st.set_page_config(
 # Custom CSS
 # ============================================================
 st.markdown("""
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
     /* ลด gap ระหว่าง metric QoQ/YoY */
     div[data-testid="stMetric"] { margin-bottom: -1.2rem !important; }
@@ -69,76 +68,14 @@ st.markdown("""
         font-size: 0.75rem !important;
     }
 
-    /* ===== Responsive: Tablet (<=768px) ===== */
+    /* ===== Mobile: ปรับแค่ font + table scroll เท่านั้น ===== */
     @media (max-width: 768px) {
-        .main-header { font-size: 1.3rem !important; }
-        .sub-header { font-size: 0.8rem !important; margin-bottom: 0.8rem !important; }
-        div[data-testid="stMetricValue"] { font-size: 1rem !important; }
-        div[data-testid="stMetricLabel"] { font-size: 0.7rem !important; }
-        div[data-testid="stMetricDelta"] { font-size: 0.65rem !important; }
-
-        /* Stack columns vertically on mobile */
-        div[data-testid="column"] {
-            width: 100% !important;
-            flex: 1 1 100% !important;
-            min-width: 100% !important;
-        }
-        /* Metrics: 2 columns per row instead of 5 */
-        div[data-testid="stHorizontalBlock"]:has(> div[data-testid="column"]:nth-child(5)) > div[data-testid="column"] {
-            width: 48% !important;
-            flex: 1 1 48% !important;
-            min-width: 48% !important;
-        }
-        /* Reduce padding */
-        .block-container { padding: 1rem 0.5rem !important; }
-        /* Tabs: smaller font */
-        button[data-baseweb="tab"] { font-size: 0.7rem !important; padding: 0.3rem 0.4rem !important; }
-        /* Dataframe scroll */
-        div[data-testid="stDataFrame"] { overflow-x: auto !important; }
-    }
-
-    /* ===== Responsive: Phone (<=480px) ===== */
-    @media (max-width: 480px) {
-        .main-header { font-size: 1.1rem !important; }
-        .sub-header { font-size: 0.72rem !important; }
-        div[data-testid="stMetricValue"] { font-size: 0.9rem !important; }
-        /* Metrics: stack single column */
-        div[data-testid="stHorizontalBlock"]:has(> div[data-testid="column"]:nth-child(5)) > div[data-testid="column"] {
-            width: 100% !important;
-            flex: 1 1 100% !important;
-            min-width: 100% !important;
-        }
-        button[data-baseweb="tab"] { font-size: 0.6rem !important; padding: 0.2rem 0.3rem !important; }
-        .block-container { padding: 0.5rem 0.3rem !important; }
-    }
-
-    /* ===== Charts: reduce height on small screens ===== */
-    @media (max-width: 768px) {
-        div[data-testid="stPlotlyChart"] > div > div > svg.main-svg {
-            max-height: 320px !important;
-        }
-        div[data-testid="stPlotlyChart"] iframe,
-        div[data-testid="stPlotlyChart"] > div {
-            max-height: 340px !important;
-        }
-        /* Dataframe: limit height and allow scroll */
-        div[data-testid="stDataFrame"] > div {
-            max-height: 300px !important;
-            overflow: auto !important;
-        }
-    }
-
-    /* ===== Ensure horizontal scrollability for tables ===== */
-    div[data-testid="stDataFrame"] {
-        overflow-x: auto !important;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    /* ===== Tabs: allow wrapping on narrow screens ===== */
-    @media (max-width: 768px) {
-        div[data-baseweb="tab-list"] {
-            flex-wrap: wrap !important;
-            gap: 2px !important;
+        .main-header { font-size: 1.4rem !important; }
+        .sub-header { font-size: 0.82rem !important; }
+        /* Table: horizontal scroll with touch */
+        div[data-testid="stDataFrame"] {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
         }
     }
 </style>
@@ -212,14 +149,18 @@ def _add_year_dividers(fig: "go.Figure", periods: list[str]) -> None:
                 layer="below",
             )
     # Rotate x-axis period labels to vertical for readability
-    # Add border frame around the plot area + responsive margins
+    # Add border frame around the plot area
     _axis_border = dict(showline=True, linewidth=1, linecolor="black", mirror=True)
     fig.update_layout(
         xaxis_tickangle=-90,
-        xaxis=_axis_border,
-        yaxis=_axis_border,
-        margin=dict(l=40, r=20, t=50, b=60),
-        legend=dict(font=dict(size=10)),
+        xaxis=dict(**_axis_border, tickfont=dict(size=9)),
+        yaxis=dict(**_axis_border, tickfont=dict(size=9)),
+        margin=dict(l=50, r=15, t=40, b=80),
+        legend=dict(
+            orientation="h", x=0.5, xanchor="center",
+            y=-0.35, yanchor="top",
+            font=dict(size=10),
+        ),
         autosize=True,
     )
     # Also apply to secondary y-axis if present (e.g. dual-axis charts)
@@ -969,13 +910,16 @@ def main():
     cp_qoq  = _pct(cp_curr, _core_adj_global[1].get("core_profit") if len(_core_adj_global) > 1 else None)
     cp_yoy  = _pct(cp_curr, _core_adj_global[yoy_step].get("core_profit") if len(_core_adj_global) > yoy_step else None)
 
-    m1, m2, m3, m4, m5 = st.columns(5)
+    # Row 1: Revenue, Net Profit, Core Profit (3 columns)
+    m1, m2, m3 = st.columns(3)
     m1.metric(f"Revenue ({latest['period']})", fmt(latest["total_revenue"]), _fmt_delta(rev_qoq, "QoQ"))
     m1.metric("", "", _fmt_delta(rev_yoy, "YoY"), label_visibility="collapsed")
     m2.metric("Net Profit", fmt(latest["net_profit"]), _fmt_delta(ni_qoq, "QoQ"))
     m2.metric("", "", _fmt_delta(ni_yoy, "YoY"), label_visibility="collapsed")
     m3.metric("Core Profit", fmt(cp_curr), _fmt_delta(cp_qoq, "QoQ"))
     m3.metric("", "", _fmt_delta(cp_yoy, "YoY"), label_visibility="collapsed")
+
+    # Row 2: ROE, D/E (2 columns)
     roe = latest_r.get('roe_pct', 0)
     roa = latest_r.get('roa_pct', 0)
     prev_r = ratios[yoy_step] if len(ratios) > yoy_step else None
@@ -987,6 +931,7 @@ def main():
     de_qoq = _pct(de, prev_rq.get('de_ratio') if prev_rq else None)
     de_yoy = _pct(de, prev_r.get('de_ratio') if prev_r else None)
 
+    m4, m5 = st.columns(2)
     m4.metric("ROE", f"{roe:.1f}%", _fmt_delta(roe_qoq, "QoQ"))
     m4.metric("", "", _fmt_delta(roe_yoy, "YoY"), label_visibility="collapsed")
     m5.metric("D/E", f"{de:.3f}", _fmt_delta(de_qoq, "QoQ"), delta_color="inverse")
