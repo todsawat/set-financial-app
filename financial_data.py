@@ -282,7 +282,7 @@ def _build_annual(raw: dict, company: dict) -> dict:
         core = r.get("core_profit", np_)
         sales_val = r.get("sales", 0) or 0
 
-        gross_margin = (gp / sales_val * 100) if sales_val and gp else 0
+        gross_margin = (gp / sales_val * 100) if sales_val and gp else None
         net_margin = (np_ / tr * 100) if tr else 0
         ebit_margin = (op / tr * 100) if tr else 0
         ebitda_margin = (ebitda / tr * 100) if tr else 0
@@ -328,7 +328,7 @@ def _build_annual(raw: dict, company: dict) -> dict:
         })
         ratios_data.append({
             "period": r["period"], "year": r.get("year", 0),
-            "gross_margin_pct": round(gross_margin, 2),
+            "gross_margin_pct": round(gross_margin, 2) if gross_margin is not None else None,
             "ebit_margin_pct": round(ebit_margin, 2),
             "ebitda_margin_pct": round(ebitda_margin, 2),
             "net_margin_pct": round(net_margin, 2),
@@ -1069,7 +1069,7 @@ def _build_quarterly(raw: dict, company: dict) -> dict:
         core = r.get("core_profit", np_)
         sales_val = r.get("sales", 0) or 0
 
-        gross_margin = (gp / sales_val * 100) if sales_val and gp else 0
+        gross_margin = (gp / sales_val * 100) if sales_val and gp else None
         net_margin = (np_ / tr * 100) if tr else 0
         ebit_margin = (op / tr * 100) if tr else 0
         ebitda_margin = (ebitda / tr * 100) if tr else 0
@@ -1121,7 +1121,7 @@ def _build_quarterly(raw: dict, company: dict) -> dict:
         roa_pct = round(annualised_np / ta * 100, 2) if ta else 0
         ratios_data.append({
             "period": r["period"], "year": r.get("year", 0),
-            "gross_margin_pct": round(gross_margin, 2),
+            "gross_margin_pct": round(gross_margin, 2) if gross_margin is not None else None,
             "ebit_margin_pct": round(ebit_margin, 2),
             "ebitda_margin_pct": round(ebitda_margin, 2),
             "net_margin_pct": round(net_margin, 2),
