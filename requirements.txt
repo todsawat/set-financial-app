@@ -4,6 +4,7 @@ plotly>=5.18.0
 requests>=2.31.0
 openpyxl>=3.1.0
 xlrd>=2.0.0
+pywebview>=5.0.0
 
 # Build tools (optional — only needed for building .app/.exe)
 # pip install pyinstaller

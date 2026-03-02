@@ -1313,7 +1313,7 @@ def main():
         ข้อมูลจาก <a href="https://www.set.or.th" target="_blank">SET.or.th</a> &nbsp;|&nbsp;
         ดาวน์โหลดงบการเงินจาก News Section ZIP &nbsp;|&nbsp;
         หน่วย: พันบาท &nbsp;|&nbsp; ข้อมูลใหม่สุดอยู่ทางซ้ายเสมอ<br>
-        <span style='color:#bbb; font-size:0.72rem;'>v1.3.0</span>
+        <span style='color:#bbb; font-size:0.72rem;'>v{__version__}</span>
         </div>""",
         unsafe_allow_html=True,
     )

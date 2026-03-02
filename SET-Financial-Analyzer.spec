@@ -16,11 +16,24 @@ Build commands:
 
 import sys
 import os
+import re
 from PyInstaller.utils.hooks import collect_all, collect_submodules
 
-# --- Collect Streamlit and Plotly fully ---
+# --- Read version from version.py ---
+_version_file = os.path.join(SPECPATH, "version.py")
+_app_version = "1.0.0"
+try:
+    with open(_version_file) as _f:
+        _m = re.search(r'__version__\s*=\s*"(.+?)"', _f.read())
+        if _m:
+            _app_version = _m.group(1)
+except Exception:
+    pass
+
+# --- Collect Streamlit, Plotly, and pywebview fully ---
 streamlit_datas, streamlit_binaries, streamlit_hiddenimports = collect_all("streamlit")
 plotly_datas, plotly_binaries, plotly_hiddenimports = collect_all("plotly")
+webview_datas, webview_binaries, webview_hiddenimports = collect_all("webview")
 
 # --- App source files ---
 app_datas = [
@@ -28,6 +41,7 @@ app_datas = [
     ("financial_data.py", "."),
     ("set_scraper.py", "."),
     ("version.py", "."),
+    ("streamlit_runner.py", "."),
 ]
 
 # --- Hidden imports that PyInstaller may miss ---
@@ -44,15 +58,46 @@ extra_hidden = [
     "PIL",              # sometimes needed by Streamlit
     "pkg_resources",
     "importlib_metadata",
+    "webview",          # pywebview native window
+    "multiprocessing",  # used by launcher for child process
 ]
+
+# --- Platform-specific hidden imports for pywebview backends ---
+if sys.platform == "win32":
+    # Windows: pywebview uses EdgeChromium via pythonnet/clr_loader
+    for pkg in ["clr_loader", "pythonnet"]:
+        extra_hidden.append(pkg)
+        try:
+            _d, _b, _h = collect_all(pkg)
+            webview_datas += _d
+            webview_binaries += _b
+            webview_hiddenimports += _h
+        except Exception:
+            pass
+
+# --- pyobjc frameworks needed by pywebview on macOS ---
+if sys.platform == "darwin":
+    for fw in [
+        "objc", "Foundation", "AppKit", "WebKit",
+        "Cocoa", "Quartz", "UniformTypeIdentifiers", "Security",
+    ]:
+        extra_hidden.append(fw)
+        try:
+            _d, _b, _h = collect_all(fw)
+            webview_datas += _d
+            webview_binaries += _b
+            webview_hiddenimports += _h
+        except Exception:
+            pass
 
 a = Analysis(
     ["launcher.py"],
     pathex=[],
-    binaries=streamlit_binaries + plotly_binaries,
-    datas=app_datas + streamlit_datas + plotly_datas,
+    binaries=streamlit_binaries + plotly_binaries + webview_binaries,
+    datas=app_datas + streamlit_datas + plotly_datas + webview_datas,
     hiddenimports=(
         extra_hidden
+        + webview_hiddenimports
         + streamlit_hiddenimports
         + plotly_hiddenimports
         + collect_submodules("streamlit")
@@ -104,7 +149,7 @@ if sys.platform == "darwin":
         bundle_identifier="com.set-financial.analyzer",
         info_plist={
             "CFBundleDisplayName": "SET Financial Analyzer",
-            "CFBundleShortVersionString": "1.0.0",
+            "CFBundleShortVersionString": _app_version,
             "NSHighResolutionCapable": True,
             "LSMinimumSystemVersion": "10.15",
         },

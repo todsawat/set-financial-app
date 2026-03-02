@@ -178,19 +178,31 @@ jobs:
           body: |
             ## SET Financial Analyzer ${{ github.ref_name }}
 
-            ### Downloads
-            - **macOS (Apple Silicon M1/M2/M3):** `SET-Financial-Analyzer-macOS-arm64.zip`
-            - **macOS (Intel):** `SET-Financial-Analyzer-macOS-x64.zip`
-            - **Windows:** `SET-Financial-Analyzer-Windows-x64.zip`
+            ### ดาวน์โหลด
+            | ระบบปฏิบัติการ | ไฟล์ |
+            |---|---|
+            | macOS (Apple Silicon M1/M2/M3/M4) | `SET-Financial-Analyzer-macOS-arm64.zip` |
+            | macOS (Intel) | `SET-Financial-Analyzer-macOS-x64.zip` |
+            | Windows | `SET-Financial-Analyzer-Windows-x64.zip` |
 
-            ### How to use
-            1. Download the ZIP for your platform
-            2. Extract the ZIP file
-            3. **macOS:** Double-click `SET-Financial-Analyzer.app`
-               - If blocked by Gatekeeper: Right-click > Open > Open
-            4. **Windows:** Double-click `SET-Financial-Analyzer.exe`
-               - If blocked by SmartScreen: Click "More info" > "Run anyway"
-            5. The app will open in your default browser automatically
+            ### วิธีใช้งาน
+
+            #### macOS
+            1. ดาวน์โหลดไฟล์ ZIP ตามรุ่น Mac ของคุณ
+            2. แตกไฟล์ ZIP (ดับเบิลคลิก)
+            3. **ก่อนเปิดครั้งแรก** macOS จะบล็อกเพราะแอปไม่ได้มาจาก App Store ให้ทำตามนี้:
+               - **คลิกขวา** (หรือ Control+คลิก) ที่ `SET-Financial-Analyzer.app` แล้วเลือก **"Open"** (เปิด)
+               - จะมีหน้าต่างแจ้งเตือนขึ้นมา ให้กด **"Open"** (เปิด) อีกครั้ง
+               - หากไม่มีปุ่ม "Open" ให้ไปที่ **System Settings > Privacy & Security** เลื่อนลงจะเห็นข้อความว่าแอปถูกบล็อก แล้วกด **"Open Anyway"**
+            4. ครั้งต่อไปสามารถดับเบิลคลิกเปิดได้ปกติ
+            5. แอปจะเปิดเป็นหน้าต่างโปรแกรมโดยอัตโนมัติ (ไม่ต้องเปิดเบราว์เซอร์)
+
+            #### Windows
+            1. ดาวน์โหลดไฟล์ ZIP
+            2. แตกไฟล์ ZIP (คลิกขวา > Extract All)
+            3. ดับเบิลคลิก `SET-Financial-Analyzer.exe`
+               - หาก SmartScreen แจ้งเตือน: กด "More info" > "Run anyway"
+            4. แอปจะเปิดเป็นหน้าต่างโปรแกรมโดยอัตโนมัติ (ไม่ต้องเปิดเบราว์เซอร์)
           draft: false
           prerelease: false
           files: |
