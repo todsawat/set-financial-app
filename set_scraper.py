@@ -1744,18 +1744,7 @@ class SETScraper:
             if age < 6 * 3600:
                 try:
                     with open(cache_file, "r") as f:
-                        cached = json.load(f)
-                    # Cache migration guard: if cached quarterly entries have
-                    # neither gross_profit nor cost_of_sales, force refresh.
-                    q_cached = cached.get("quarterly_xlsx_data", [])
-                    stale = False
-                    for qd in q_cached:
-                        inc = qd.get("income", {})
-                        if "gross_profit" not in inc and "cost_of_sales" not in inc:
-                            stale = True
-                            break
-                    if not stale:
-                        return cached
+                        return json.load(f)
                 except Exception:
                     pass
 
@@ -1859,12 +1848,7 @@ class SETScraper:
                 except Exception:
                     stale_cache = True
 
-                if stale_cache:
-                    try:
-                        cache_path.unlink()
-                    except Exception:
-                        pass
-                else:
+                if not stale_cache:
                     _cb(f"{display_q}/{year_ce} (cached)", idx + 1, total_news)
                     continue
 
@@ -1955,29 +1939,13 @@ class SETScraper:
             pass
 
     def _load_all_quarterly_cache(self, symbol: str) -> list[dict]:
-        """Load all cached quarterly summaries, newest first.
-
-        Invalidates (deletes) cache files that are missing gross_profit
-        and cost_of_sales data — forces re-download
-        so the new COGS extraction logic can populate them.
-        """
+        """Load all cached quarterly summaries, newest first."""
         cache_dir = self._quarterly_cache_dir(symbol)
         results = []
         for path in sorted(cache_dir.glob("*.json"), reverse=True):
             try:
                 with open(path, "r") as f:
-                    data = json.load(f)
-                # Cache migration: if neither gross_profit nor cost_of_sales
-                # are present, invalidate this cache entry
-                # so it gets re-downloaded with the updated parser.
-                inc = data.get("income", {})
-                if "gross_profit" not in inc and "cost_of_sales" not in inc:
-                    try:
-                        path.unlink()
-                    except Exception:
-                        pass
-                    continue
-                results.append(data)
+                    results.append(json.load(f))
             except Exception:
                 pass
         return results
