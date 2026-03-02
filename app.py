@@ -1036,10 +1036,9 @@ def main():
         if view_mode == "quarterly":
             url_map = {i["period"]: i.get("download_url", "") for i in income if i.get("download_url")}
             if url_map:
-                link_parts = [
-                    f"[{period}]({url})" for period, url in url_map.items()
-                ]
-                st.markdown("**ดาวน์โหลด ZIP งบการเงิน:** " + " | ".join(link_parts))
+                with st.expander("ดาวน์โหลด ZIP งบการเงิน"):
+                    link_parts = [f"[{period}]({url})" for period, url in url_map.items()]
+                    st.markdown(" | ".join(link_parts))
 
         inc_df = income_statement_to_df(income)
 
@@ -1068,8 +1067,9 @@ def main():
         if view_mode == "quarterly":
             url_map = {i["period"]: i.get("download_url", "") for i in income if i.get("download_url")}
             if url_map:
-                link_parts = [f"[{period}]({url})" for period, url in url_map.items()]
-                st.markdown("**ดาวน์โหลด ZIP งบการเงิน:** " + " | ".join(link_parts))
+                with st.expander("ดาวน์โหลด ZIP งบการเงิน"):
+                    link_parts = [f"[{period}]({url})" for period, url in url_map.items()]
+                    st.markdown(" | ".join(link_parts))
 
         bal_df = balance_sheet_to_df(balance)
 
@@ -1398,8 +1398,9 @@ def main():
         if view_mode == "quarterly":
             url_map = {i["period"]: i.get("download_url", "") for i in income if i.get("download_url")}
             if url_map:
-                link_parts = [f"[{period}]({url})" for period, url in url_map.items()]
-                st.markdown("**ดาวน์โหลด ZIP งบการเงิน:** " + " | ".join(link_parts))
+                with st.expander("ดาวน์โหลด ZIP งบการเงิน"):
+                    link_parts = [f"[{period}]({url})" for period, url in url_map.items()]
+                    st.markdown(" | ".join(link_parts))
 
         if cashflow:
             cf_df = cashflow_to_df(cashflow)
