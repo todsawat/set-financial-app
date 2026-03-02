@@ -99,17 +99,13 @@ st.markdown("""
         }
     }
 
-    /* Excel export button — small, right-aligned */
-    [class*="st-key-xlsx_export_"] { margin-top: -0.5rem; }
-    [class*="st-key-xlsx_export_"] > div { display: flex; justify-content: flex-end; }
-    [class*="st-key-xlsx_export_"] > div > div { display: flex; justify-content: flex-end; }
-    [class*="st-key-xlsx_export_"] button {
-        font-size: 0.7rem !important;
+    /* Excel export button — small */
+    [data-testid="stDownloadButton"] button {
+        font-size: 0.72rem !important;
         padding: 0.15rem 0.5rem !important;
         min-height: 0 !important;
         height: auto !important;
         line-height: 1.4 !important;
-        margin-left: auto !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -161,16 +157,18 @@ def color_negative_red(df_numeric: pd.DataFrame, is_ratio: bool = False):
 
 
 def _xlsx_download(df: pd.DataFrame, filename: str, key: str):
-    """Render a small Excel-icon download button aligned to the right."""
+    """Render a small Excel download button pinned to the right."""
     buf = io.BytesIO()
     df.to_excel(buf, index=True, engine="openpyxl")
-    with st.container(key=f"xlsx_export_{key}"):
+    _, btn_col = st.columns([8, 1])
+    with btn_col:
         st.download_button(
-            label="\U0001F4E5 xlsx",
+            label="📥 xlsx",
             data=buf.getvalue(),
             file_name=filename,
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             key=key,
+            use_container_width=True,
         )
 
 
