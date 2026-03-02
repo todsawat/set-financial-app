@@ -100,8 +100,8 @@ st.markdown("""
     }
 
     /* Excel export button — small, right-aligned */
-    .st-key-xlsx_export { display: flex; justify-content: flex-end; margin-top: -0.5rem; }
-    .st-key-xlsx_export button {
+    [class*="st-key-xlsx_export_"] { display: flex; justify-content: flex-end; margin-top: -0.5rem; }
+    [class*="st-key-xlsx_export_"] button {
         font-size: 0.7rem !important;
         padding: 0.15rem 0.5rem !important;
         min-height: 0 !important;
@@ -161,7 +161,7 @@ def _xlsx_download(df: pd.DataFrame, filename: str, key: str):
     """Render a small Excel-icon download button aligned to the right."""
     buf = io.BytesIO()
     df.to_excel(buf, index=True, engine="openpyxl")
-    with st.container(key="xlsx_export"):
+    with st.container(key=f"xlsx_export_{key}"):
         st.download_button(
             label="\U0001F4E5 xlsx",
             data=buf.getvalue(),
