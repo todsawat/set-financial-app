@@ -16,6 +16,7 @@ import io
 import os
 import time
 import json
+import logging
 import zipfile
 import tempfile
 import requests
@@ -23,6 +24,8 @@ import openpyxl
 import pandas as pd
 from typing import Optional
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -110,8 +113,8 @@ class SETScraper:
         try:
             self.session.get(f"{self.BASE_URL}/th/home", timeout=15)
             self._session_ready = True
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Session init failed: %s", e)
 
     def _api_get(self, endpoint: str, params: dict | None = None):
         """GET from the SET internal API with automatic retry."""
@@ -126,7 +129,8 @@ class SETScraper:
                     self._session_ready = False
                     self._ensure_session()
                     time.sleep(1)
-            except Exception:
+            except Exception as e:
+                logger.warning("API GET %s attempt %d failed: %s", endpoint, attempt + 1, e)
                 if attempt < 2:
                     time.sleep(1)
         return None
@@ -364,8 +368,10 @@ class SETScraper:
             r = self.session.get(url, timeout=30)
             if r.status_code == 200 and len(r.content) > 100:
                 return r.content
-        except Exception:
-            pass
+            logger.warning("ZIP download failed: status=%s size=%s url=%s",
+                           r.status_code, len(r.content), url)
+        except Exception as e:
+            logger.warning("ZIP download error: %s url=%s", e, url)
         return None
 
     def extract_xlsx_from_zip(self, zip_bytes: bytes) -> bytes | None:

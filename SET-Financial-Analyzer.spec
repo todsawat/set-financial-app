@@ -30,10 +30,11 @@ try:
 except Exception:
     pass
 
-# --- Collect Streamlit, Plotly, and pywebview fully ---
+# --- Collect Streamlit, Plotly, pywebview, and certifi fully ---
 streamlit_datas, streamlit_binaries, streamlit_hiddenimports = collect_all("streamlit")
 plotly_datas, plotly_binaries, plotly_hiddenimports = collect_all("plotly")
 webview_datas, webview_binaries, webview_hiddenimports = collect_all("webview")
+certifi_datas, certifi_binaries, certifi_hiddenimports = collect_all("certifi")
 
 # --- App source files ---
 app_datas = [
@@ -60,6 +61,7 @@ extra_hidden = [
     "importlib_metadata",
     "webview",          # pywebview native window
     "multiprocessing",  # used by launcher for child process
+    "certifi",          # SSL CA certificates for requests
 ]
 
 # --- Platform-specific hidden imports for pywebview backends ---
@@ -93,11 +95,12 @@ if sys.platform == "darwin":
 a = Analysis(
     ["launcher.py"],
     pathex=[],
-    binaries=streamlit_binaries + plotly_binaries + webview_binaries,
-    datas=app_datas + streamlit_datas + plotly_datas + webview_datas,
+    binaries=streamlit_binaries + plotly_binaries + webview_binaries + certifi_binaries,
+    datas=app_datas + streamlit_datas + plotly_datas + webview_datas + certifi_datas,
     hiddenimports=(
         extra_hidden
         + webview_hiddenimports
+        + certifi_hiddenimports
         + streamlit_hiddenimports
         + plotly_hiddenimports
         + collect_submodules("streamlit")

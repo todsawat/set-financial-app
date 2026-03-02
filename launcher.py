@@ -62,6 +62,9 @@ def _run_streamlit(app_path, port):
     Target function for the Streamlit child process.
     Runs in its own process so signal handlers work correctly.
     """
+    # SSL certs must also be set in the child process
+    _fix_ssl_certs()
+
     sys.argv = [
         "streamlit",
         "run",
@@ -78,9 +81,34 @@ def _run_streamlit(app_path, port):
     stcli.main()
 
 
+def _fix_ssl_certs():
+    """
+    Fix SSL certificate lookup for frozen (PyInstaller) apps.
+
+    When bundled, the `certifi` CA bundle is inside _MEIPASS but the
+    `requests` library may not find it automatically.  We set the
+    environment variables that `requests` and `urllib3` check so that
+    HTTPS connections (e.g. to SET.or.th) work correctly.
+    """
+    if not getattr(sys, "frozen", False):
+        return  # not needed in dev mode
+
+    try:
+        import certifi
+        ca_path = certifi.where()
+        if os.path.isfile(ca_path):
+            os.environ["SSL_CERT_FILE"] = ca_path
+            os.environ["REQUESTS_CA_BUNDLE"] = ca_path
+    except Exception:
+        pass
+
+
 def main():
     # Required for PyInstaller frozen multiprocessing on Windows/macOS
     multiprocessing.freeze_support()
+
+    # Fix SSL certificates for frozen app (must run before any HTTP calls)
+    _fix_ssl_certs()
 
     base_path = get_base_path()
     app_path = os.path.join(base_path, "app.py")
