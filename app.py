@@ -160,7 +160,7 @@ def _add_year_dividers(fig: "go.Figure", periods: list[str]) -> None:
         xaxis_tickangle=-90,
         xaxis=dict(**_axis_border, tickfont=dict(size=9)),
         yaxis=dict(**_axis_border, tickfont=dict(size=9)),
-        margin=dict(l=50, r=15, t=80, b=80),
+        margin=dict(l=50, r=15, t=110, b=80),
         legend=dict(
             orientation="h", x=0.5, xanchor="center",
             y=-0.35, yanchor="top",
