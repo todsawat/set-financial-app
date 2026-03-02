@@ -122,8 +122,14 @@ st.markdown("""
             font-size: 0.65rem !important;
         }
         /* ลบ gap ทุก element ภายใน container */
+        .st-key-mobile_metrics,
         .st-key-mobile_metrics * {
+            gap: 0 !important;
             column-gap: 0 !important;
+            row-gap: 0.15rem !important;
+        }
+        .st-key-mobile_metrics div[data-testid="stHorizontalBlock"] {
+            row-gap: 0 !important;
         }
     }
 </style>
