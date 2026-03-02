@@ -1,12 +1,6 @@
-# Build artifacts
-build/
-dist/
+# Python
 *.pyc
 __pycache__/
-
-# PyInstaller
-*.manifest
-*.spec.bak
 
 # IDE
 .vscode/
@@ -15,7 +9,7 @@ __pycache__/
 # macOS
 .DS_Store
 
-# Test results (optional - remove these lines if you want to track them)
+# Test results
 test_*_results.json
 test_results.json
 
