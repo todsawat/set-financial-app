@@ -89,35 +89,27 @@ st.markdown("""
         /* Mobile: hide 5-col, show 3+2 */
         .st-key-desktop_metrics { display: none !important; }
         .st-key-mobile_metrics { display: block !important; }
-        /* Force mobile metrics columns to stay side-by-side */
+        /* Mobile metrics: columns เรียงข้างกัน ชิดๆ */
         .st-key-mobile_metrics div[data-testid="stHorizontalBlock"] {
             flex-wrap: nowrap !important;
-            gap: 0.3rem !important;
+            gap: 0 !important;
+            margin-bottom: 0.3rem !important;
         }
         .st-key-mobile_metrics div[data-testid="column"] {
             flex: 1 1 0 !important;
             min-width: 0 !important;
             width: auto !important;
-            padding: 0 0.1rem !important;
-        }
-        /* Metric: ลด gap แนวตั้งระหว่าง QoQ/YoY ให้ชิดกัน */
-        .st-key-mobile_metrics div[data-testid="stMetric"] {
-            margin-bottom: -1rem !important;
-            padding-bottom: 0 !important;
-        }
-        .st-key-mobile_metrics div[data-testid="stVerticalBlockBorderWrapper"] {
-            gap: 0 !important;
-        }
-        .st-key-mobile_metrics div[data-testid="stVerticalBlock"] {
-            gap: 0 !important;
-        }
-        /* Column: ลด padding แนวนอนให้แคบลง */
-        .st-key-mobile_metrics div[data-testid="column"] {
             padding: 0 !important;
+            margin: 0 !important;
         }
-        .st-key-mobile_metrics div[data-testid="stHorizontalBlock"] {
-            gap: 0.2rem !important;
-            margin-bottom: 0.3rem !important;
+        /* แนวตั้ง: QoQ/YoY ห่างกันนิดเดียว */
+        .st-key-mobile_metrics div[data-testid="stVerticalBlock"],
+        .st-key-mobile_metrics div[data-testid="stVerticalBlockBorderWrapper"] {
+            gap: 0.15rem !important;
+        }
+        .st-key-mobile_metrics div[data-testid="stMetric"] {
+            margin: 0 !important;
+            padding: 0 !important;
         }
         /* Font ให้พอดี 3 คอลัมน์ */
         .st-key-mobile_metrics div[data-testid="stMetricValue"] {
@@ -128,6 +120,10 @@ st.markdown("""
         }
         .st-key-mobile_metrics div[data-testid="stMetricDelta"] {
             font-size: 0.65rem !important;
+        }
+        /* ลบ gap ทุก element ภายใน container */
+        .st-key-mobile_metrics * {
+            column-gap: 0 !important;
         }
     }
 </style>
