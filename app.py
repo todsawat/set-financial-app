@@ -73,7 +73,7 @@ st.markdown("""
         padding-top: 3rem !important;
     }
 
-    /* ===== Mobile: ปรับแค่ font + table scroll เท่านั้น ===== */
+    /* ===== Mobile ===== */
     @media (max-width: 768px) {
         .main-header { font-size: 1.4rem !important; }
         .sub-header { font-size: 0.82rem !important; }
@@ -81,6 +81,16 @@ st.markdown("""
         div[data-testid="stDataFrame"] {
             overflow-x: auto !important;
             -webkit-overflow-scrolling: touch;
+        }
+        /* Metrics: 5 columns → wrap 3 per row on mobile */
+        div[data-testid="stHorizontalBlock"]:has(> div[data-testid="column"]:nth-child(5)) {
+            flex-wrap: wrap !important;
+            gap: 0 !important;
+        }
+        div[data-testid="stHorizontalBlock"]:has(> div[data-testid="column"]:nth-child(5)) > div[data-testid="column"] {
+            width: 33.3% !important;
+            flex: 0 0 33.3% !important;
+            min-width: 0 !important;
         }
     }
 </style>
@@ -932,37 +942,28 @@ def main():
     cp_qoq  = _pct(cp_curr, _core_adj_global[1].get("core_profit") if len(_core_adj_global) > 1 else None)
     cp_yoy  = _pct(cp_curr, _core_adj_global[yoy_step].get("core_profit") if len(_core_adj_global) > yoy_step else None)
 
-    # Row 1: Revenue, Net Profit, Core Profit (3 columns)
-    m1, m2, m3 = st.columns(3)
+    # Key Highlights: 5 columns (desktop) / 3x2 wrap (mobile via CSS)
+    roe = latest_r.get('roe_pct', 0)
+    prev_r = ratios[yoy_step] if len(ratios) > yoy_step else None
+    prev_rq = ratios[1] if len(ratios) > 1 else None
+    roe_qoq = _pct(roe, prev_rq.get('roe_pct') if prev_rq else None)
+    roe_yoy = _pct(roe, prev_r.get('roe_pct') if prev_r else None)
+
+    de = latest_r.get('de_ratio', 0)
+    de_qoq = _pct(de, prev_rq.get('de_ratio') if prev_rq else None)
+    de_yoy = _pct(de, prev_r.get('de_ratio') if prev_r else None)
+
+    m1, m2, m3, m4, m5 = st.columns(5)
     m1.metric(f"Revenue ({latest['period']})", fmt(latest["total_revenue"]), _fmt_delta(rev_qoq, "QoQ"))
     m1.metric("", "", _fmt_delta(rev_yoy, "YoY"), label_visibility="collapsed")
     m2.metric("Net Profit", fmt(latest["net_profit"]), _fmt_delta(ni_qoq, "QoQ"))
     m2.metric("", "", _fmt_delta(ni_yoy, "YoY"), label_visibility="collapsed")
     m3.metric("Core Profit", fmt(cp_curr), _fmt_delta(cp_qoq, "QoQ"))
     m3.metric("", "", _fmt_delta(cp_yoy, "YoY"), label_visibility="collapsed")
-
-    # Row 2: ROE, ROA, D/E (3 columns)
-    roe = latest_r.get('roe_pct', 0)
-    roa = latest_r.get('roa_pct', 0)
-    prev_r = ratios[yoy_step] if len(ratios) > yoy_step else None
-    prev_rq = ratios[1] if len(ratios) > 1 else None
-    roe_qoq = _pct(roe, prev_rq.get('roe_pct') if prev_rq else None)
-    roe_yoy = _pct(roe, prev_r.get('roe_pct') if prev_r else None)
-
-    roa_qoq = _pct(roa, prev_rq.get('roa_pct') if prev_rq else None)
-    roa_yoy = _pct(roa, prev_r.get('roa_pct') if prev_r else None)
-
-    de = latest_r.get('de_ratio', 0)
-    de_qoq = _pct(de, prev_rq.get('de_ratio') if prev_rq else None)
-    de_yoy = _pct(de, prev_r.get('de_ratio') if prev_r else None)
-
-    m4, m5, m6 = st.columns(3)
     m4.metric("ROE", f"{roe:.1f}%", _fmt_delta(roe_qoq, "QoQ"))
     m4.metric("", "", _fmt_delta(roe_yoy, "YoY"), label_visibility="collapsed")
-    m5.metric("ROA", f"{roa:.1f}%", _fmt_delta(roa_qoq, "QoQ"))
-    m5.metric("", "", _fmt_delta(roa_yoy, "YoY"), label_visibility="collapsed")
-    m6.metric("D/E", f"{de:.3f}", _fmt_delta(de_qoq, "QoQ"), delta_color="inverse")
-    m6.metric("", "", _fmt_delta(de_yoy, "YoY"), label_visibility="collapsed", delta_color="inverse")
+    m5.metric("D/E", f"{de:.3f}", _fmt_delta(de_qoq, "QoQ"), delta_color="inverse")
+    m5.metric("", "", _fmt_delta(de_yoy, "YoY"), label_visibility="collapsed", delta_color="inverse")
 
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
