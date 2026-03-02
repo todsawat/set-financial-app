@@ -333,28 +333,33 @@ def chart_core_vs_reported(data: list[dict]) -> go.Figure:
     return fig
 
 
+def _safe_fmt(values: list) -> list[str]:
+    """Format numeric values as '%.1f%%', treating None as empty string."""
+    return [f"{v:.1f}%" if v is not None else "" for v in values]
+
+
 def chart_margins(ratios: list[dict]) -> go.Figure:
     periods = [d["period"] for d in ratios][::-1]
-    gpm = [d["gross_margin_pct"] for d in ratios][::-1]
-    net_m = [d["net_margin_pct"] for d in ratios][::-1]
-    core_m = [d["core_margin_pct"] for d in ratios][::-1]
+    gpm = [d.get("gross_margin_pct") for d in ratios][::-1]
+    net_m = [d.get("net_margin_pct") for d in ratios][::-1]
+    core_m = [d.get("core_margin_pct") for d in ratios][::-1]
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         name="Gross Margin", x=periods, y=gpm,
         mode="lines+markers+text", line=dict(color="#ff9800", width=2.5),
-        marker=dict(size=8), text=[f"{v:.1f}%" for v in gpm], textposition="top center",
+        marker=dict(size=8), text=_safe_fmt(gpm), textposition="top center",
     ))
     fig.add_trace(go.Scatter(
         name="Net Margin", x=periods, y=net_m,
         mode="lines+markers+text", line=dict(color="#2196f3", width=2.5),
-        marker=dict(size=8), text=[f"{v:.1f}%" for v in net_m], textposition="bottom center",
+        marker=dict(size=8), text=_safe_fmt(net_m), textposition="bottom center",
     ))
     fig.add_trace(go.Scatter(
         name="Core Margin", x=periods, y=core_m,
         mode="lines+markers+text", line=dict(color="#e91e63", width=2.5, dash="dash"),
         marker=dict(size=8, symbol="diamond"),
-        text=[f"{v:.1f}%" for v in core_m], textposition="bottom center",
+        text=_safe_fmt(core_m), textposition="bottom center",
     ))
     fig.update_layout(
         title="Profit Margin Trends (%)",
@@ -375,12 +380,12 @@ def chart_roe_roa(ratios: list[dict]) -> go.Figure:
     fig.add_trace(go.Scatter(
         name="ROE", x=periods, y=roe, mode="lines+markers+text",
         line=dict(color="#2196f3", width=3), marker=dict(size=10),
-        text=[f"{v:.1f}%" for v in roe], textposition="top center",
+        text=_safe_fmt(roe), textposition="top center",
     ))
     fig.add_trace(go.Scatter(
         name="ROA", x=periods, y=roa, mode="lines+markers+text",
         line=dict(color="#4caf50", width=3), marker=dict(size=10),
-        text=[f"{v:.1f}%" for v in roa], textposition="bottom center",
+        text=_safe_fmt(roa), textposition="bottom center",
     ))
     fig.update_layout(
         title="ROE & ROA (%)",
@@ -399,7 +404,7 @@ def chart_de_ratio(ratios: list[dict]) -> go.Figure:
     fig = go.Figure()
     fig.add_trace(go.Bar(
         name="D/E", x=periods, y=de, marker_color="#ff9800",
-        text=[f"{v:.3f}" for v in de], textposition="auto",
+        text=[f"{v:.3f}" if v is not None else "" for v in de], textposition="auto",
     ))
     fig.update_layout(
         title="D/E Ratio",
@@ -446,7 +451,7 @@ def chart_tax_rate(ratios: list[dict], income: list[dict] | None = None) -> go.F
             mode="lines+markers+text",
             line=dict(color="#7b1fa2", width=2.5),
             marker=dict(size=8),
-            text=[f"{v:.1f}%" for v in tax_rate],
+            text=_safe_fmt(tax_rate),
             textposition="top center",
             textfont=dict(size=8),
         ), secondary_y=True)
@@ -471,7 +476,7 @@ def chart_tax_rate(ratios: list[dict], income: list[dict] | None = None) -> go.F
             mode="lines+markers+text",
             line=dict(color="#7b1fa2", width=2.5),
             marker=dict(size=8),
-            text=[f"{v:.1f}%" for v in tax_rate],
+            text=_safe_fmt(tax_rate),
             textposition="top center",
             textfont=dict(size=8),
         ))
