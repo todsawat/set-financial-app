@@ -111,6 +111,100 @@ git push origin v1.1.0
 
 CI/CD จะ build `.app` (Intel + Apple Silicon) และ `.exe` (Windows) แล้วสร้าง GitHub Release พร้อมไฟล์ดาวน์โหลดอัตโนมัติ
 
+## Testing
+
+ระบบ test ตรวจสอบความถูกต้องของข้อมูลแบบ 3 ชั้น — เทียบกับ API, เทียบกับ XLSX ต้นฉบับ, และตรวจสอบความสมเหตุสมผลทางบัญชี
+
+### ไฟล์ Test
+
+| ไฟล์ | จุดประสงค์ | Symbols | วิธีรัน |
+|------|-----------|---------|--------|
+| `test_accuracy.py` | ตรวจความถูกต้องแบบละเอียด เทียบ App vs API vs XLSX | 220 ตัว | Sequential (live API) |
+| `test_200.py` | ตรวจความถูกต้องแบบ parallel สำหรับ 200 บริษัท | ~200 ตัว | Parallel (8 threads, cache only) |
+| `test_data_quality.py` | ตรวจคุณภาพข้อมูล ความสมเหตุสมผล ความครบถ้วน | ทุกตัวที่มี cache | Sequential (cache only) |
+
+### วิธีรัน
+
+```bash
+# Accuracy test — ตรวจทุก symbol (ใช้เวลานาน ต้องมี internet)
+python3 test_accuracy.py
+
+# Accuracy test — เฉพาะ 200 symbols ใหม่
+python3 test_accuracy.py --new-only
+
+# Parallel test — ต้องมี /tmp/symbols_200.json และ cache files
+python3 test_200.py
+
+# Data quality test — ทุก symbol ที่มี cache
+python3 test_data_quality.py
+
+# Data quality test — เฉพาะบางตัว
+python3 test_data_quality.py AOT CPALL PTT
+
+# Data quality test — แบบ batch (ทีละ 20 ตัว)
+python3 test_data_quality.py --batch 1
+```
+
+### สิ่งที่ Test ตรวจสอบ
+
+#### 1. `test_accuracy.py` — Exhaustive Accuracy Test
+
+ตรวจทุกตัวเลขที่แสดงในแอป โดยเทียบกับ 3 แหล่งข้อมูล:
+
+**Annual (เทียบกับ API):**
+- Income Statement: Revenue, Sales, Expense, EBIT, EBITDA, Net Profit, EPS
+- Balance Sheet: Total Assets, Total Liabilities, Equity, สมการ A = L + E
+- Ratios: Gross/Net/Core Margin, ROE, ROA, D/E, Current Ratio, Quick Ratio
+- Core Profit: สูตร `Core = NP - PFO × (1 - tax_rate)`
+- Cash Flow: Operating, Investing, Financing, Net
+
+**Quarterly (เทียบกับ XLSX ต้นฉบับ):**
+- เทียบทุกรายการกับ XLSX โดยตรง (Q1/Q2/Q3)
+- ตรวจ Q4 = FY - Q1 - Q2 - Q3
+- จัดการ Cumulative Cash Flow (Q2 = cum6M - Q1, Q3 = cum9M - cum6M)
+- ตรวจสูตร EBITDA = Operating Profit + Depreciation
+
+**Cross-mode (Annual vs Quarterly):**
+- ผลรวม Q1-Q4 ต้องตรงกับตัวเลขรายปี (Revenue, Net Profit, Cash Flow, Core Profit)
+
+**Output:** `test_results.json`
+
+#### 2. `test_200.py` — Parallel Scale Test
+
+Logic เดียวกับ `test_accuracy.py` แต่รันแบบ parallel 8 threads สำหรับ 200 บริษัท:
+
+- ใช้ cache เท่านั้น (ไม่เรียก API ใหม่ — เร็วมาก)
+- ต้องมี `/tmp/symbols_200.json` (list ของ symbols)
+- ข้าม symbol ที่ยังไม่มี cache
+
+**Output:** `test_200_results.json`
+
+#### 3. `test_data_quality.py` — Data Quality & Sanity
+
+ตรวจว่าข้อมูลสมเหตุสมผลทางบัญชีและการเงิน:
+
+- **Completeness** — ข้อมูลครบทุก field ที่จำเป็นหรือไม่ (>50% ของ periods)
+- **XLSX vs Processed** — ค่าที่ประมวลผลแล้วตรงกับ XLSX ต้นฉบับมั้ย
+- **Sanity (Quarterly)** — Revenue > 0, NP ไม่เกิน 2x Revenue, A = L + E, D/E >= 0, Tax Rate 0-60%
+- **Sanity (Annual)** — Revenue YoY ไม่กระโดดเกิน 10 เท่า, Finance Cost ไม่หายไปกะทันหัน
+- **Consistency** — ผลรวมรายไตรมาสตรงกับรายปี
+
+มีระบบ **Curated Symbols** (20 ตัวหลัก) ที่ใช้เกณฑ์เข้มงวด (FAIL) ส่วนตัวอื่นใช้เกณฑ์ผ่อนปรน (WARN) เพราะอาจมีปัญหา NCI หรือ parent-only XLSX
+
+**Output:** `test_quality_results.json`
+
+### Tolerance Levels
+
+| การตรวจสอบ | Tolerance | หมายเหตุ |
+|-----------|-----------|---------|
+| Income Statement vs API/XLSX | 1-2% | ค่าเริ่มต้น |
+| EPS | 2% | ผ่อนปรนกว่าเพราะมี rounding |
+| Core Profit formula | 3% | มี tax rate estimation |
+| Balance Sheet A = L + E | 2-5% | กว้างขึ้นเพราะ NCI |
+| Ratios (Margin, ROE, ROA) | 1-2% | |
+| Cross-mode (Q sum vs Annual) | 2-5% | parent vs consolidated |
+| Data Quality XLSX match | 2% PASS, 10% WARN | >10% = FAIL |
+
 ## Project Structure
 
 ```
@@ -121,6 +215,9 @@ set-financial-app/
 ├── version.py                     # Version number (auto-synced with git tag)
 ├── launcher.py                    # Desktop app launcher (PyInstaller wrapper)
 ├── requirements.txt               # Python dependencies
+├── test_accuracy.py               # Exhaustive accuracy test (220 symbols)
+├── test_200.py                    # Parallel accuracy test (200 symbols)
+├── test_data_quality.py           # Data quality & sanity checks
 ├── SET-Financial-Analyzer.spec    # PyInstaller build config
 ├── build_app.sh                   # Local build script
 └── .github/workflows/build.yml   # CI/CD multi-platform build
