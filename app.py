@@ -99,15 +99,21 @@ st.markdown("""
         }
     }
 
-    /* Excel export button — tiny square at bottom-right */
+    /* Excel export button — extra small, flush-right */
+    [class*="st-key-xlsx_wrap_"] { margin-top: -0.45rem; }
+    [class*="st-key-xlsx_wrap_"] [data-testid="stDownloadButton"] {
+        display: flex;
+        justify-content: flex-end;
+        margin-right: -0.2rem;
+    }
     [class*="st-key-xlsx_wrap_"] [data-testid="stDownloadButton"] button {
-        width: 2rem !important;
-        height: 2rem !important;
-        min-height: 2rem !important;
+        width: 1.55rem !important;
+        height: 1.55rem !important;
+        min-height: 1.55rem !important;
         padding: 0 !important;
-        font-size: 1rem !important;
+        font-size: 0.82rem !important;
         line-height: 1 !important;
-        border-radius: 0.4rem !important;
+        border-radius: 0.35rem !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -163,16 +169,14 @@ def _xlsx_download(df: pd.DataFrame, filename: str, key: str):
     buf = io.BytesIO()
     df.to_excel(buf, index=True, engine="openpyxl")
     with st.container(key=f"xlsx_wrap_{key}"):
-        _, btn_col = st.columns([12, 1])
-        with btn_col:
-            st.download_button(
-                label="📥",
-                data=buf.getvalue(),
-                file_name=filename,
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                key=key,
-                use_container_width=False,
-            )
+        st.download_button(
+            label="📥",
+            data=buf.getvalue(),
+            file_name=filename,
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            key=key,
+            use_container_width=False,
+        )
 
 
 # ============================================================
