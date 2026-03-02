@@ -99,13 +99,15 @@ st.markdown("""
         }
     }
 
-    /* Excel export button — small */
-    [data-testid="stDownloadButton"] button {
-        font-size: 0.72rem !important;
-        padding: 0.15rem 0.5rem !important;
-        min-height: 0 !important;
-        height: auto !important;
-        line-height: 1.4 !important;
+    /* Excel export button — tiny square at bottom-right */
+    [class*="st-key-xlsx_wrap_"] [data-testid="stDownloadButton"] button {
+        width: 2rem !important;
+        height: 2rem !important;
+        min-height: 2rem !important;
+        padding: 0 !important;
+        font-size: 1rem !important;
+        line-height: 1 !important;
+        border-radius: 0.4rem !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -160,16 +162,17 @@ def _xlsx_download(df: pd.DataFrame, filename: str, key: str):
     """Render a small Excel download button pinned to the right."""
     buf = io.BytesIO()
     df.to_excel(buf, index=True, engine="openpyxl")
-    _, btn_col = st.columns([8, 1])
-    with btn_col:
-        st.download_button(
-            label="📥 xlsx",
-            data=buf.getvalue(),
-            file_name=filename,
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            key=key,
-            use_container_width=True,
-        )
+    with st.container(key=f"xlsx_wrap_{key}"):
+        _, btn_col = st.columns([12, 1])
+        with btn_col:
+            st.download_button(
+                label="📥",
+                data=buf.getvalue(),
+                file_name=filename,
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                key=key,
+                use_container_width=False,
+            )
 
 
 # ============================================================
