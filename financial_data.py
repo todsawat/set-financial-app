@@ -92,7 +92,7 @@ def _infer_quarter(q_str: str | None, period_desc: str) -> str:
 # Data Fetching
 # ============================================================
 
-def get_financial_data(symbol: str, view_mode: str = "annual") -> dict:
+def get_financial_data(symbol: str, view_mode: str = "annual", progress_callback=None) -> dict:
     """
     Fetch and process complete financial data for a symbol.
 
@@ -103,7 +103,7 @@ def get_financial_data(symbol: str, view_mode: str = "annual") -> dict:
                       Q4 = FY(annual) − (Q1+Q2+Q3) when enough data exists.
     """
     scraper = get_scraper()
-    raw = scraper.fetch_full_data(symbol)
+    raw = scraper.fetch_full_data(symbol, progress_callback=progress_callback)
 
     if raw.get("error"):
         return {"error": raw["error"], "symbol": symbol}

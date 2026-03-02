@@ -1608,7 +1608,7 @@ class SETScraper:
     # ------------------------------------------------------------------
     # Full pipeline: symbol -> complete data
     # ------------------------------------------------------------------
-    def fetch_full_data(self, symbol: str, use_cache: bool = True) -> dict:
+    def fetch_full_data(self, symbol: str, use_cache: bool = True, progress_callback=None) -> dict:
         """
         Full pipeline to fetch and parse financial data for a symbol.
 
@@ -1619,6 +1619,10 @@ class SETScraper:
 
         Returns dict with annual_data, quarterly_xlsx_data, xlsx_data, etc.
         """
+        def _cb(msg: str, current: int = 0, total: int = 0):
+            if progress_callback:
+                progress_callback(msg, current, total)
+
         symbol = symbol.upper().strip()
         cache_file = CACHE_DIR / f"{symbol}_data.json"
 
@@ -1646,6 +1650,7 @@ class SETScraper:
         }
 
         # 1. Company profile
+        _cb("กำลังดึงข้อมูลบริษัท...")
         profile = self.get_company_profile_factsheet(symbol)
         profile_th = self._api_get(f"stock/{symbol}/profile", {"lang": "th"})
         if profile:
@@ -1666,6 +1671,7 @@ class SETScraper:
             }
 
         # 2. Annual financial summary (multiple years)
+        _cb("กำลังดึงข้อมูลสรุปรายปี...")
         highlights = self.get_company_highlight_financial(symbol)
         if highlights:
             result["annual_data"] = [
@@ -1675,6 +1681,7 @@ class SETScraper:
 
         # 2b. Factsheet financial statements (multi-period, structured line items)
         #     Typically 4-5 periods: mix of quarterly + annual
+        _cb("กำลังดึง Factsheet...")
         factsheet = {}
         for acct in ("income_statement", "balance_sheet", "cash_flow"):
             fs_data = self.get_factsheet_financialstatement(symbol, acct)
@@ -1704,9 +1711,11 @@ class SETScraper:
             }
 
         # 3b. Find all FS news items via news/search (with date ranges)
+        _cb("กำลังค้นหางบการเงินย้อนหลัง...")
         fs_news = self.get_all_fs_news(symbol, years_back=7)
 
         # 3c. Download and parse each ZIP that isn't already cached
+        total_news = len(fs_news)
         for idx, news_item in enumerate(fs_news):
             headline = news_item.get("headline", "")
             quarter, year_ce = self._parse_fs_headline(headline)
@@ -1716,9 +1725,11 @@ class SETScraper:
             # Skip if already cached
             cache_path = cache_dir / f"{year_ce}_{quarter}.json"
             if cache_path.exists():
+                _cb(f"งบ {quarter}/{year_ce} (cached)", idx + 1, total_news)
                 continue
 
             # Get download URL from news detail
+            _cb(f"ดาวน์โหลดงบ {quarter}/{year_ce}", idx + 1, total_news)
             detail = self.get_fs_news_detail(str(news_item["id"]))
             if not detail or not detail.get("downloadUrl"):
                 continue
@@ -1755,6 +1766,7 @@ class SETScraper:
         #     cumulative) so _add_q4_rows_from_xlsx can use Strategy B (Q4=FY-9M).
         #     The fetched Q3 is saved with "q4_helper": True so the display
         #     layer can exclude it from charts/tables.
+        _cb("ตรวจสอบข้อมูลเสริมสำหรับ Q4...")
         self._ensure_q3_helper_for_oldest_q4(symbol, fs_news, result["quarterly_xlsx_data"], cache_dir)
 
         # 4c. If a year still has FY + Q3 but no Q1/Q2 (Strategy B not possible
@@ -1766,6 +1778,7 @@ class SETScraper:
         result["quarterly_xlsx_data"] = self._load_all_quarterly_cache(symbol)
 
         # 5. Latest quarter key financial data (for quick metrics)
+        _cb("กำลังสรุปข้อมูล...")
         latest = self.get_key_financial_data(symbol)
         if latest:
             result["latest_quarter"] = latest

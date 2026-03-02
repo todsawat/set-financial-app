@@ -731,10 +731,22 @@ def main():
         st.info("กรุณาพิมพ์ Symbol หุ้นที่ต้องการวิเคราะห์ในแถบด้านซ้าย")
         return
 
-    # Fetch data with loading spinner
+    # Fetch data with progress bar
     view_label = "รายไตรมาส" if view_mode == "quarterly" else "รายปี"
-    with st.spinner(f"กำลังดาวน์โหลดงบการเงิน {symbol} ({view_label}) จาก SET.or.th ..."):
-        data = get_financial_data(symbol, view_mode=view_mode)
+    progress_container = st.container()
+    with progress_container:
+        progress_bar = st.progress(0, text=f"กำลังเริ่มดาวน์โหลดงบการเงิน {symbol} ...")
+        status_text = st.empty()
+
+    def _on_progress(msg: str, current: int = 0, total: int = 0):
+        pct = current / total if total > 0 else 0
+        progress_bar.progress(min(pct, 1.0), text=f"{msg}  ({current}/{total})" if total > 0 else msg)
+        if total > 0:
+            status_text.caption(f"งบที่ {current} จาก {total} งบ")
+
+    data = get_financial_data(symbol, view_mode=view_mode, progress_callback=_on_progress)
+    progress_bar.empty()
+    status_text.empty()
 
     if data.get("error"):
         st.error(f"ไม่สามารถดึงข้อมูลได้: {data['error']}")
