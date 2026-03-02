@@ -100,15 +100,26 @@ st.markdown("""
             width: auto !important;
             padding: 0 0.1rem !important;
         }
-        /* ลด negative margin ใน mobile ไม่ให้ซ้อนกัน */
+        /* Metric: ลด gap แนวตั้งระหว่าง QoQ/YoY ให้ชิดกัน */
         .st-key-mobile_metrics div[data-testid="stMetric"] {
-            margin-bottom: 0 !important;
+            margin-bottom: -1rem !important;
+            padding-bottom: 0 !important;
         }
-        /* เพิ่มช่องว่างระหว่าง 2 แถว */
+        .st-key-mobile_metrics div[data-testid="stVerticalBlockBorderWrapper"] {
+            gap: 0 !important;
+        }
+        .st-key-mobile_metrics div[data-testid="stVerticalBlock"] {
+            gap: 0 !important;
+        }
+        /* Column: ลด padding แนวนอนให้แคบลง */
+        .st-key-mobile_metrics div[data-testid="column"] {
+            padding: 0 !important;
+        }
         .st-key-mobile_metrics div[data-testid="stHorizontalBlock"] {
-            margin-bottom: 0.5rem !important;
+            gap: 0.2rem !important;
+            margin-bottom: 0.3rem !important;
         }
-        /* ลดขนาด font ให้พอดีกับ 3 คอลัมน์ */
+        /* Font ให้พอดี 3 คอลัมน์ */
         .st-key-mobile_metrics div[data-testid="stMetricValue"] {
             font-size: 1rem !important;
         }
